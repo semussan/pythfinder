@@ -26,9 +26,8 @@ class feyAdventure():
                 self.model.world.load_submap('fey/bridge.map')
         
 keyStatus=defaultdict(lambda :False)
-mousex, mousey=0,0
+mousex, mousey,button=0,0,0
 def handle_user_input(model,camera):
-        
         def shiftMod():
             return 5 if keyStatus[K_LSHIFT] else 1
         
@@ -47,7 +46,8 @@ def handle_user_input(model,camera):
                     keyStatus[MOUSEBUTTONDOWN]=False
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     keyStatus[MOUSEBUTTONDOWN]=True
-                
+                    global button
+                    button=event.button
                         
         if keyStatus[K_RIGHT]:
                 camera.x+=1*shiftMod()
@@ -59,44 +59,11 @@ def handle_user_input(model,camera):
                 camera.y+=1*shiftMod()
         if keyStatus[MOUSEBUTTONDOWN]:
             trans=camera.xyToModel(mousex,mousey)
-            print mousex,mousey
-            clickeditem = model.world.click(trans[0],trans[1],None)
+            clickeditem = model.world.click(trans[0],trans[1],button)
 
 
 
             pos = pygame.mouse.get_pos()
-
-class camera():
-        x=0
-        y=0
-        horzTilesPerScreen=50
-        resx=1024
-        resy=768
-        subx=100
-        suby=100
-        subwid=800
-        subhig=600
-            
-        def xyToModel(self,x,y):
-            return ((x-self.subx)/self.gridSize(),
-                    (y-self.suby)/self.gridSize(),)
-                                  
-        def gridSize(self):
-            return camera.subwid/camera.horzTilesPerScreen
-        def getXYForXY(self,x,y):
-            return (self.subx+(x-self.x)*self.gridSize(),
-                    self.suby+(y-self.y)*self.gridSize(),)
-                    
-        def getRectForXY(self,x,y):
-            return (self.subx+(x-self.x)*self.gridSize(),
-                    self.suby+(y-self.y)*self.gridSize(),
-                    self.subx+((x-self.x)+1)*self.gridSize(),
-                    self.suby+((y-self.y)+1)*self.gridSize())
-        def getRectForRect(self,rect):
-            return (self.subx+(rect[0]-self.x)*self.gridSize(),
-                    self.suby+(rect[1]-self.y)*self.gridSize(),
-                    self.subx+(rect[2]-self.x)*self.gridSize(),
-                    self.suby+(rect[3]-self.y)*self.gridSize())
 def drawWorld(model, camera):
         gridSize=camera.gridSize
         
@@ -136,11 +103,11 @@ if __name__ == '__main__':
         adv=feyAdventure()
         model=adv.model
         clock = pygame.time.Clock()
-        FRAMES_PER_SECOND = 10
+        FRAMES_PER_SECOND = 60
         while running:
                 handle_user_input(model,camera)
                 drawWorld(model, camera)
-                drawAt('chars/c1.png', model.char.x,model.char.y)
+                #drawAt('chars/c1.png', model.char.x,model.char.y)
                 pygame.display.update()
                 deltat = clock.tick(FRAMES_PER_SECOND)     
                 
