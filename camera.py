@@ -8,10 +8,12 @@ class camera():
         resx=1024
         resy=768
         subx=100
-        suby=100
+        suby=230
         subwid=800
         subhig=600
-            
+        def getCameraCenter(self):
+            return (self.x+ self.subx/self.gridSize(),
+                    self.y+ self.suby/self.gridSize())      
         def xyToModel(self,x,y):
             return ((x-self.subx)/self.gridSize()+self.x,
                     (y-self.suby)/self.gridSize()+self.y,)

@@ -1,6 +1,7 @@
 
 import pygame
 from pygame.locals import *
+from sound import SoundManager
 tileCache={}
 imgCache={}
 
@@ -13,17 +14,19 @@ def inBounds(rect,x,y):
 
 
 def getNeighbors(widthx,widthy,x,y):
-    posibleNeightbors=[(x-1,y),(x+1,y) ,(x,y-1) ,(x,y+1)]
+    posibleNeighbors=[(x-1,y),(x+1,y) ,(x,y-1) ,(x,y+1),
+                       (x-2,y),(x+2,y) ,(x,y-2) ,(x,y+2),
+                       (x-1,y-1),(x-1,y+1) ,(x+1,y-1) ,(x+1,y+1)]
     neighbors=[]
-    for neighbor in posibleNeightbors:
-        if inBounds((0,0,widthx,widthy),x,y):
+    for neighbor in posibleNeighbors:
+        if inBounds((0,0,widthx,widthy),neighbor[0],neighbor[1]):
             neighbors.append(neighbor)
     return neighbors
 
 class FoWMap():
     fogImg=[None for x in range(3)]
     def __init__(self,rect):
-        self.foglevels=[[2 for x in range(rect[3]+1)] for x in range(rect[2]+1)]
+        self.foglevels=[[2 for x in range(rect[3])] for x in range(rect[2])]
         self.rect=rect
 
 
@@ -32,7 +35,7 @@ class FoWMap():
         if self.fogImg[level] is None:
             trans=pygame.Surface((rect[2],rect[3],))
             trans.set_alpha(level*128)
-            trans.fill((0,0,0))
+            trans.fill((10,10,10))
             self.fogImg[level]=trans
         screen.blit(self.fogImg[level], (rect[0],rect[1]))
         #pygame.draw.rect(screen,(level*30,0,0),rect,0)
@@ -46,16 +49,20 @@ class FoWMap():
     def click(self, x,y,clicktype):
         if clicktype==1:
             self.foglevels[x][y]=0
-            neighbors=[(x-1,y),(x+1,y) ,(x,y-1) ,(x,y+1)]
             for neighbor in getNeighbors(self.rect[2],self.rect[3],x,y):
                 if self.foglevels[neighbor[0]][neighbor[1]]>0:
-                    self.foglevels[neighbor[0]][neighbor[1]]=1
+                    if abs(neighbor[0]-x)+abs(neighbor[1]-y)<=1:
+                        self.foglevels[neighbor[0]][neighbor[1]]=0
+                    else:
+                        self.foglevels[neighbor[0]][neighbor[1]]=1
         if clicktype==2:
             self.foglevels[x][y]=2
-            neighbors=[(x-1,y),(x+1,y) ,(x,y-1) ,(x,y+1)]
-            for neighbor in getNeighbors(self.rect,x,y):
+            for neighbor in getNeighbors(self.rect[2],self.rect[3],x,y):
                 if self.foglevels[neighbor[0]][neighbor[1]]<2:
-                    self.foglevels[neighbor[0]][neighbor[1]]=1
+                    if abs(neighbor[0]-x)+abs(neighbor[1]-y)<=1:
+                        self.foglevels[neighbor[0]][neighbor[1]]=2
+                    else:
+                        self.foglevels[neighbor[0]][neighbor[1]]=1
         print self.foglevels[x][y]
 
 class Background():
@@ -83,6 +90,12 @@ class Background():
 class world():
     backgrounds=[]
     imgs=[]
+    soundManager=None
+    def __init__(self, screen, camera):
+        self.screen=screen
+        self.camera=camera
+        self.soundManager=SoundManager(camera)
+        pygame.init() 
     def load_submap(self, mapFileName):
         f = open('maps/'+mapFileName, 'rb')
         subdir='/'.join(('maps/'+mapFileName).split('/')[:-1]) + '/' 
@@ -91,13 +104,19 @@ class world():
             linetype, args = (parsed[0],parsed[1:])
             if linetype is 'i':#img
                 x,y,wid,hig,filename = args
-                self.backgrounds.append(Background(subdir+filename,(int(x),int(y),int(wid),int(hig)), None))
+                self.backgrounds.append(Background(subdir+filename.strip(),(int(x),int(y),int(wid),int(hig)), None))
+            if linetype is 's':#sound
+                x,y,vol,filename = args
+                self.soundManager.addBG(int(x),int(y),float(vol),subdir+filename.strip())
+            
             #if linetype is 't':#tile
             #    x,y,filename = args
             #    if filename not in tileCache:
             #        tileCache[filename]=pygame.image.load(subdir+filename)
             #    self.tiles.append((int(x),int(y),tileCache[filename]))
             #print x, y
+    def update(self):
+          self.soundManager.update()                              
     def click(self, x,y,clicktype):
         for background in self.backgrounds:
             if inBounds(background.getBounds(),x,y):
