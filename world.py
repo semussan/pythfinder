@@ -6,17 +6,17 @@ imgCache={}
 
         
 def inBounds(rect,x,y):
-    if x>=rect[0] and x<rect[2] and y>=rect[1] and y<rect[3]:
+    if x>=rect[0] and x<rect[0]+rect[2] and y>=rect[1] and y<rect[1]+rect[3]:
         return True
     else:
         return False
 
 
-def getNeighbors(rect,x,y):
+def getNeighbors(widthx,widthy,x,y):
     posibleNeightbors=[(x-1,y),(x+1,y) ,(x,y-1) ,(x,y+1)]
     neighbors=[]
     for neighbor in posibleNeightbors:
-        if inBounds(rect,x,y):
+        if inBounds((0,0,widthx,widthy),x,y):
             neighbors.append(neighbor)
     return neighbors
 
@@ -28,7 +28,7 @@ class FoWMap():
 
 
     def drawSingleFoW(self, screen, camera, x,y,level):
-        rect=camera.getRectForXY(x,y)
+        rect=camera.getRectForXY(self.rect[0]+x,self.rect[1]+y)
         if self.fogImg[level] is None:
             trans=pygame.Surface((rect[2],rect[3],))
             trans.set_alpha(level*128)
@@ -38,8 +38,8 @@ class FoWMap():
         #pygame.draw.rect(screen,(level*30,0,0),rect,0)
         
     def draw(self, screen, camera):
-        for x in range(len(self.foglevels)):
-            for y in range(len(self.foglevels[0])):
+        for x in range(self.rect[2]):
+            for y in range(self.rect[3]):
                 if self.foglevels[x][y]>0:
                     self.drawSingleFoW(screen, camera, x,y,self.foglevels[x][y])
                     
@@ -47,7 +47,7 @@ class FoWMap():
         if clicktype==1:
             self.foglevels[x][y]=0
             neighbors=[(x-1,y),(x+1,y) ,(x,y-1) ,(x,y+1)]
-            for neighbor in getNeighbors(self.rect,x,y):
+            for neighbor in getNeighbors(self.rect[2],self.rect[3],x,y):
                 if self.foglevels[neighbor[0]][neighbor[1]]>0:
                     self.foglevels[neighbor[0]][neighbor[1]]=1
         if clicktype==2:
@@ -58,10 +58,6 @@ class FoWMap():
                     self.foglevels[neighbor[0]][neighbor[1]]=1
         print self.foglevels[x][y]
 
-                    
-                
-            
-
 class Background():
     def __init__(self,imgName,rect,entryPoint):
         self.imgName=imgName
@@ -71,7 +67,8 @@ class Background():
             imgCache[imgName]=pygame.image.load(imgName)
             
     def draw(self, screen, camera):
-        picture = pygame.transform.scale(imgCache[self.imgName], ((self.rect[2]-self.rect[0])*camera.gridSize(), (self.rect[3]-self.rect[1])*camera.gridSize()))
+        picture = pygame.transform.scale(imgCache[self.imgName], (self.rect[2]*camera.gridSize(),
+                                                                  self.rect[3]*camera.gridSize()))
         newrect = picture.get_rect()
         newrect = newrect.move(self.rect[0],self.rect[1])
         screen.blit(picture, camera.getRectForRect(newrect))
@@ -104,4 +101,4 @@ class world():
     def click(self, x,y,clicktype):
         for background in self.backgrounds:
             if inBounds(background.getBounds(),x,y):
-                background.click(x,y,clicktype)
+                background.click(x-background.rect[0],y-background.rect[1],clicktype)

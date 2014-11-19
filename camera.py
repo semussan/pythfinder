@@ -30,5 +30,5 @@ class camera():
         def getRectForRect(self,rect):
             return (self.subx+(rect[0]-self.x)*self.gridSize(),
                     self.suby+(rect[1]-self.y)*self.gridSize(),
-                    self.subx+(rect[2]-self.x)*self.gridSize(),
-                    self.suby+(rect[3]-self.y)*self.gridSize())
+                    self.subx+(rect[0]+rect[2]-self.x)*self.gridSize(),
+                    self.suby+(rect[1]+rect[3]-self.y)*self.gridSize())
