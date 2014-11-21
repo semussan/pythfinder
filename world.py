@@ -46,7 +46,7 @@ class FoWMap():
                 if self.foglevels[x][y]>0:
                     self.drawSingleFoW(screen, camera, x,y,self.foglevels[x][y])
                     
-    def click(self, x,y,clicktype):
+    def click(self, x,y,clicktype,camera):
         if clicktype==1:
             self.foglevels[x][y]=0
             for neighbor in getNeighbors(self.rect[2],self.rect[3],x,y):
@@ -66,10 +66,13 @@ class FoWMap():
         print self.foglevels[x][y]
 
 class Background():
-    def __init__(self,imgName,rect,entryPoint):
+    def __init__(self,imgName,rect,entryPoint, hasShadows):
         self.imgName=imgName
-        self.FoW=FoWMap(rect)
         self.rect=rect
+        self.hasShadows=hasShadows
+        self.FoW=None
+        if hasShadows:
+            self.FoW=FoWMap(rect)
         if imgName not in imgCache:
             imgCache[imgName]=pygame.image.load(imgName)
             
@@ -79,10 +82,12 @@ class Background():
         newrect = picture.get_rect()
         newrect = newrect.move(self.rect[0],self.rect[1])
         screen.blit(picture, camera.getRectForRect(newrect))
-        self.FoW.draw(screen, camera)
+        if self.FoW and camera.drawShadows:
+            self.FoW.draw(screen, camera)
 
-    def click(self, x,y,clicktype):
-        self.FoW.click(x,y,clicktype)
+    def click(self, x,y,clicktype,camera):
+        if self.FoW and camera.drawShadows:
+            self.FoW.click(x,y,clicktype,camera)
 
     def getBounds(self):
         return self.rect
@@ -103,8 +108,8 @@ class world():
             parsed=mapLine.strip().split(' ')
             linetype, args = (parsed[0],parsed[1:])
             if linetype is 'i':#img
-                x,y,wid,hig,filename = args
-                self.backgrounds.append(Background(subdir+filename.strip(),(int(x),int(y),int(wid),int(hig)), None))
+                x,y,wid,hig,filename, hasShadows = args
+                self.backgrounds.append(Background(subdir+filename.strip(),(int(x),int(y),int(wid),int(hig), ), None,hasShadows == 'True' ))
             if linetype is 's':#sound
                 x,y,vol,filename = args
                 self.soundManager.addBG(int(x),int(y),float(vol),subdir+filename.strip())
@@ -117,7 +122,7 @@ class world():
             #print x, y
     def update(self):
           self.soundManager.update()                              
-    def click(self, x,y,clicktype):
+    def click(self, x,y,clicktype,camera):
         for background in self.backgrounds:
             if inBounds(background.getBounds(),x,y):
-                background.click(x-background.rect[0],y-background.rect[1],clicktype)
+                background.click(x-background.rect[0],y-background.rect[1],clicktype,camera)
