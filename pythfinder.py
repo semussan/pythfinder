@@ -5,6 +5,7 @@ from world import world
 from camera import camera
 from pygame.locals import *
 from collections import defaultdict
+import pyconsole
 screen = None
 BLACK= (0,0,0)
 running = True
@@ -28,19 +29,25 @@ class feyAdventure():
         model=None
         def __init__(self,screen, camera):
                 self.model=model(screen, camera)
-                self.model.world.load_submap('fey/bridge.map')
+                self.model.world.load('fey/bridge.map')
         
+def isCtrl():
+        return bool(pygame.key.get_mods()& KMOD_LCTRL)
 
-
-def handle_user_input(model,camera):
+def handle_user_input(model,camera,console):
         global keyStatus,keyStatusLast
         def shiftMod():
             return 5 if keyStatus[K_LSHIFT] else 1
+
+        
+        if console.active:
+                console.process_input(globals())
         
         mousex,mousey=pygame.mouse.get_pos()
         for event in pygame.event.get():
                 #record key status
                 if hasattr(event, 'key'):
+
                     down = event.type == KEYDOWN
                     keyStatus[event.key]=down
                     if event.type==KEYDOWN and event.key == pygame.K_ESCAPE:
@@ -55,25 +62,32 @@ def handle_user_input(model,camera):
                     global button
                     button=event.button
                         
-        if keyStatus[K_RIGHT]:
+        if keyStatus[K_RIGHT] or keyStatus[K_d]:
                 camera.x+=1*shiftMod()
-        if keyStatus[K_LEFT]: 
+        if keyStatus[K_LEFT] or keyStatus[K_a]: 
                 camera.x-=1*shiftMod()
-        if keyStatus[K_UP]:
+        if keyStatus[K_UP] or keyStatus[K_w]:
                 camera.y-=1*shiftMod()
-        if keyStatus[K_DOWN]: 
+        if keyStatus[K_DOWN] or keyStatus[K_s]: 
                 camera.y+=1*shiftMod()
+                
         if keyStatus[K_RETURN]:
                 if not keyStatusLast[K_RETURN]:
                         camera.toggleFull()
-        if keyStatus[K_PAGEDOWN]:
-                camera.drawGrid=False
+                        
+
         if keyStatus[K_PAGEUP]:
-                camera.drawGrid=True
+                camera.drawGrid=False
+        if keyStatus[K_PAGEDOWN]:
+                camera.drawGrid=True   
+                
         if keyStatus[K_HOME]:
                 camera.drawShadows=False
         if keyStatus[K_END]:
                 camera.drawShadows=True
+
+        if keyStatus[K_BACKQUOTE]:
+                console.active=True
                 
         pos = pygame.mouse.get_pos()
         if keyStatus[MOUSEBUTTONDOWN]:
@@ -88,16 +102,21 @@ def handle_user_input(model,camera):
 
 
 if __name__ == '__main__':
+        
+        
         screen = pygame.display.set_mode((camera.resx,camera.resy),  DOUBLEBUF)
         camera=camera(screen)
+        console=pyconsole.Console(screen,(0,0,camera.resx,camera.resy/6))
+        console.active=False
+
         adv=feyAdventure(screen, camera)
         model=adv.model
         clock = pygame.time.Clock()
         FRAMES_PER_SECOND = 40
         pygame.init() 
         while running:
-                camera.drawWorld(model)
-                handle_user_input(model,camera)
+                camera.drawWorld(model,console)
+                handle_user_input(model,camera,console)
                 model.world.update()
                 #drawAt('chars/c1.png', model.char.x,model.char.y)
                 pygame.display.update()

@@ -101,7 +101,10 @@ class world():
         self.camera=camera
         self.soundManager=SoundManager(camera)
         pygame.init() 
-    def load_submap(self, mapFileName):
+    def load(self, mapFileName):
+        self.backgrounds=[]
+        self.imgs=[]
+        self.soundManager.reset()
         f = open('maps/'+mapFileName, 'rb')
         subdir='/'.join(('maps/'+mapFileName).split('/')[:-1]) + '/' 
         for mapLine in f:

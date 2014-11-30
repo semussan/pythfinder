@@ -20,6 +20,11 @@ class SoundManager():
     def __init__(self,camera):
         self.camera=camera
         self.manager=pygame.mixer.pre_init(44100, -16, 2, 2048)
+    def reset(self):
+        for bg in self.bgtracks:
+            bg.soundobj.stop()
+        self.bgtracks=[]
+        
         
     def addBG(self,x,y,vol,filename):
         self.bgtracks.append(bgtrack(x,y,vol,filename))
