@@ -1,4 +1,6 @@
-i 0 0 20 15 shot01.jpg True
-i 20 0 20 15 shot01.jpg False
-s 10 5 .4 romanesca_converted.ogg
-t 1 2 t1.png
+background 0 0 20 15 shot01.jpg True
+background 20 0 20 15 shot01.jpg False
+sound 10 5 .4 romanesca_converted.ogg
+tile 1 2 t1.png
+npc 2 2 2 2 True chars/c1.png
+npc 3 3 2 2 True chars/c4.png

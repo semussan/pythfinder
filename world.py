@@ -1,25 +1,20 @@
 
 import pygame
+from sprite import Sprite
 from pygame.locals import *
 from sound import SoundManager
 tileCache={}
 imgCache={}
 
-        
-def inBounds(rect,x,y):
-    if x>=rect[0] and x<rect[0]+rect[2] and y>=rect[1] and y<rect[1]+rect[3]:
-        return True
-    else:
-        return False
 
 
-def getNeighbors(widthx,widthy,x,y):
+def getNeighbors(widthx,widthy,x,y,camera):
     posibleNeighbors=[(x-1,y),(x+1,y) ,(x,y-1) ,(x,y+1),
                        (x-2,y),(x+2,y) ,(x,y-2) ,(x,y+2),
                        (x-1,y-1),(x-1,y+1) ,(x+1,y-1) ,(x+1,y+1)]
     neighbors=[]
     for neighbor in posibleNeighbors:
-        if inBounds((0,0,widthx,widthy),neighbor[0],neighbor[1]):
+        if camera.inBounds((0,0,widthx,widthy),neighbor[0],neighbor[1]):
             neighbors.append(neighbor)
     return neighbors
 
@@ -49,7 +44,7 @@ class FoWMap():
     def click(self, x,y,clicktype,camera):
         if clicktype==1:
             self.foglevels[x][y]=0
-            for neighbor in getNeighbors(self.rect[2],self.rect[3],x,y):
+            for neighbor in getNeighbors(self.rect[2],self.rect[3],x,y,camera):
                 if self.foglevels[neighbor[0]][neighbor[1]]>0:
                     if abs(neighbor[0]-x)+abs(neighbor[1]-y)<=1:
                         self.foglevels[neighbor[0]][neighbor[1]]=0
@@ -57,13 +52,13 @@ class FoWMap():
                         self.foglevels[neighbor[0]][neighbor[1]]=1
         if clicktype==2:
             self.foglevels[x][y]=2
-            for neighbor in getNeighbors(self.rect[2],self.rect[3],x,y):
+            for neighbor in getNeighbors(self.rect[2],self.rect[3],x,y,camera):
                 if self.foglevels[neighbor[0]][neighbor[1]]<2:
                     if abs(neighbor[0]-x)+abs(neighbor[1]-y)<=1:
                         self.foglevels[neighbor[0]][neighbor[1]]=2
                     else:
                         self.foglevels[neighbor[0]][neighbor[1]]=1
-        print self.foglevels[x][y]
+        #print self.foglevels[x][y]
 
 class Background():
     def __init__(self,imgName,rect,entryPoint, hasShadows):
@@ -82,6 +77,8 @@ class Background():
         newrect = picture.get_rect()
         newrect = newrect.move(self.rect[0],self.rect[1])
         screen.blit(picture, camera.getRectForRect(newrect))
+            
+    def drawFoW(self, screen, camera):
         if self.FoW and camera.drawShadows:
             self.FoW.draw(screen, camera)
 
@@ -96,6 +93,7 @@ class world():
     backgrounds=[]
     imgs=[]
     soundManager=None
+    sprites=[]
     def __init__(self, screen, camera):
         self.screen=screen
         self.camera=camera
@@ -110,12 +108,15 @@ class world():
         for mapLine in f:
             parsed=mapLine.strip().split(' ')
             linetype, args = (parsed[0],parsed[1:])
-            if linetype is 'i':#img
+            if linetype == 'background':#img
                 x,y,wid,hig,filename, hasShadows = args
                 self.backgrounds.append(Background(subdir+filename.strip(),(int(x),int(y),int(wid),int(hig), ), None,hasShadows == 'True' ))
-            if linetype is 's':#sound
+            if linetype == 'sound':#sound
                 x,y,vol,filename = args
                 self.soundManager.addBG(int(x),int(y),float(vol),subdir+filename.strip())
+            if linetype == 'npc':
+                x,y,width, height , movable, filename = args
+                self.sprites.append(Sprite(subdir+filename.strip(),(int(x),int(y),int(width),int(height), ),movable == 'True' ,))
             
             #if linetype is 't':#tile
             #    x,y,filename = args
@@ -123,9 +124,21 @@ class world():
             #        tileCache[filename]=pygame.image.load(subdir+filename)
             #    self.tiles.append((int(x),int(y),tileCache[filename]))
             #print x, y
-    def update(self):
-          self.soundManager.update()                              
-    def click(self, x,y,clicktype,camera):
+    def draw(self,screen,camera):
         for background in self.backgrounds:
-            if inBounds(background.getBounds(),x,y):
+            background.draw(screen, camera)
+        for sprite in self.sprites:
+            sprite.draw(screen, camera)
+        for background in self.backgrounds:
+            background.drawFoW(screen, camera)
+    def update(self):
+          self.soundManager.update()
+          for sprite in self.sprites:
+              sprite.update()
+    def click(self, x,y,clicktype,camera):
+        for sprite in self.sprites:
+            ret= sprite.click(x-sprite.rect[0],y-sprite.rect[1],clicktype,camera)
+            if ret: return ret
+        for background in self.backgrounds:
+            if camera.inBounds(background.getBounds(),x,y):
                 background.click(x-background.rect[0],y-background.rect[1],clicktype,camera)

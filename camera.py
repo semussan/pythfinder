@@ -20,6 +20,11 @@ class camera():
         horz={}
         resx=defResx
         resy=defResy
+        def inBounds(self,rect,x,y):
+            if x>=rect[0] and x<rect[0]+rect[2] and y>=rect[1] and y<rect[1]+rect[3]:
+                return True
+            else:
+                return False
 
         def __init__(self, screen):
                 self.screen=screen
@@ -71,8 +76,7 @@ class camera():
                 #        rect = picture.get_rect()
                 #        rect = rect.move((self.x+x*gridSize +self.subx ,self.y+y*gridSize +self.suby))
                 #        screen.blit(picture, rect)
-                for background in model.world.backgrounds:
-                    background.draw(self.screen, self)
+                model.world.draw(self.screen, self)
                     
                 #gridlines
                 if self.drawGrid:
