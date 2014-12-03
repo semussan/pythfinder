@@ -83,12 +83,40 @@ class Background():
         if imgName not in imgCache:
             imgCache[imgName]=pygame.image.load(imgName)
             
+    def drawGridlines(self,camera):
+        #gridlines
+        if camera.drawGrid:
+                if (self.rect) not in camera.vert:
+                        camera.vert[self.rect]=pygame.image.load('coreImgs/vert.png')
+                picture = pygame.transform.scale(camera.vert[self.rect], (3, self.rect[3]*camera.gridSize()))
+                newrect = picture.get_rect()
+                
+                xs,ys,ws,hs= camera.getRectForRect(self.rect)
+                newrect = newrect.move(0,ys)
+                oldpos=0
+                for x in range(xs, xs+ws, camera.gridSize()):
+                        newrect = newrect.move(x-oldpos,0)
+                        camera.screen.blit(picture, newrect)
+                        oldpos=x
+
+                if (self.rect) not in camera.horz:
+                        camera.horz[self.rect]=pygame.image.load('coreImgs/horz.png')
+                picture = pygame.transform.scale(camera.horz[self.rect], (self.rect[2]*camera.gridSize(), 3))
+                newrect = picture.get_rect()
+                newrect = newrect.move(xs,0)
+                oldpos=0
+                for y in range(ys, ys+hs, camera.gridSize()):
+                        newrect = newrect.move(0,y-oldpos)
+                        camera.screen.blit(picture, newrect)
+                        oldpos=y            
     def draw(self, screen, camera):
         picture = pygame.transform.scale(imgCache[self.imgName], (self.rect[2]*camera.gridSize(),
                                                                   self.rect[3]*camera.gridSize()))
         newrect = picture.get_rect()
         newrect = newrect.move(self.rect[0],self.rect[1])
         screen.blit(picture, camera.getRectForRect(newrect))
+    
+        self.drawGridlines(camera)
             
     def drawFoW(self, screen, camera):
         if self.FoW and camera.drawShadows:
@@ -129,8 +157,8 @@ class world():
                 x,y,vol,filename = args
                 self.soundManager.addBG(int(x),int(y),float(vol),subdir+filename.strip())
             if linetype == 'npc':
-                x,y,width, height , movable, filename = args
-                self.sprites.append(Sprite(subdir+filename.strip(),(int(x),int(y),int(width),int(height), ),movable == 'True' ,))
+                x,y,width, height , movable, cycleTime, filename = args
+                self.sprites.append(Sprite(subdir+filename.strip(),(int(x),int(y),int(width),int(height), ),movable == 'True' , int(cycleTime)))
             
             #if linetype is 't':#tile
             #    x,y,filename = args
@@ -160,14 +188,16 @@ class world():
             
     def update(self):
           self.soundManager.update()
+          self.sprites=sorted(self.sprites, key=lambda x: x.rect[1])#sort by height
           for sprite in self.sprites:
               numUpdates=4 if self.camera.battleManager else 1
               for x in range(numUpdates):
                   sprite.update()
-    def click(self, x,y,clicktype,camera):
-        for sprite in self.sprites:
-            ret= sprite.click(x-sprite.rect[0],y-sprite.rect[1],clicktype,camera)
-            if ret: return ret
+    def click(self, x,y,clicktype,camera, newClick):
+        if newClick:
+            for sprite in self.sprites:
+                ret= sprite.click(x-sprite.rect[0],y-sprite.rect[1],clicktype,camera)
+                if ret: return ret
         for background in self.backgrounds:
             if camera.inBounds(background.getBounds(),x,y):
                 background.click(x-background.rect[0],y-background.rect[1],clicktype,camera)

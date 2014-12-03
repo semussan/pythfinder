@@ -21,19 +21,22 @@ class Sprite():
     def onClick(self,x,y,clicktype,camera):
         pass
         #print 'Click for', self.imgName
-    def __init__(self,imgName,rect,movable=True):
+    def __init__(self,imgName,rect,movable=True, cycleTime=100):
 
 
         self.imgName=imgName
         self.rect=rect
         self.imgs=[]
         for f in getAllFiles(imgName):
-            self.imgs.append(pygame.image.load(f))
+            if 'P.png' in f:
+                self.portrait=pygame.image.load(f)
+            else:
+                self.imgs.append(pygame.image.load(f))
         self.movable=movable
         self.facingRight=True
         getAllFiles(imgName)
         self.timer=0
-        self.switchTime=100
+        self.switchTime=cycleTime
 
         #self.draw=draw
 

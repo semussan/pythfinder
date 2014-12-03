@@ -91,6 +91,29 @@ class camera():
                 trans.set_alpha(alpha)
                 trans.fill(color)
                 self.screen.blit(trans, (rect[0],rect[1]))
+##        def drawGridlines(self):
+##            #gridlines
+##            if self.drawGrid:
+##                    if (self.resx,self.resy) not in self.vert:
+##                            self.vert[(self.resx,self.resy)]=pygame.image.load('coreImgs/vert.png')
+##                    picture = pygame.transform.scale(self.vert[(self.resx,self.resy)], (3, self.resy))
+##                    newrect = picture.get_rect()
+##                    oldpos=0
+##                    for x in range(0 + (self.subx%self.gridSize()), self.resx, self.gridSize()):
+##                            newrect = newrect.move(x-oldpos,0)
+##                            self.screen.blit(picture, newrect)
+##                            oldpos=x
+##
+##                    if (self.resx,self.resy) not in self.horz:
+##                            self.horz[(self.resx,self.resy)]=pygame.image.load('coreImgs/horz.png')
+##                    picture = pygame.transform.scale(self.horz[(self.resx,self.resy)], (self.resx, 3))
+##                    newrect = picture.get_rect()
+##                    oldpos=0
+##                    for y in range(0 + (self.suby%self.gridSize()), self.resy, self.gridSize()):
+##                            newrect = newrect.move(0,y-oldpos)
+##                            self.screen.blit(picture, newrect)
+##                            oldpos=y
+        
         def drawWorld(self,model,console):
                 gridSize=self.gridSize
                 
@@ -106,27 +129,7 @@ class camera():
                 #        screen.blit(picture, rect)
                 model.world.draw(self.screen, self)
                     
-                #gridlines
-                if self.drawGrid:
-                        if (self.resx,self.resy) not in self.vert:
-                                self.vert[(self.resx,self.resy)]=pygame.image.load('coreImgs/vert.png')
-                        picture = pygame.transform.scale(self.vert[(self.resx,self.resy)], (3, self.resy))
-                        newrect = picture.get_rect()
-                        oldpos=0
-                        for x in range(0 + (self.subx%self.gridSize()), self.resx, self.gridSize()):
-                                newrect = newrect.move(x-oldpos,0)
-                                self.screen.blit(picture, newrect)
-                                oldpos=x
 
-                        if (self.resx,self.resy) not in self.horz:
-                                self.horz[(self.resx,self.resy)]=pygame.image.load('coreImgs/horz.png')
-                        picture = pygame.transform.scale(self.horz[(self.resx,self.resy)], (self.resx, 3))
-                        newrect = picture.get_rect()
-                        oldpos=0
-                        for y in range(0 + (self.suby%self.gridSize()), self.resy, self.gridSize()):
-                                newrect = newrect.move(0,y-oldpos)
-                                self.screen.blit(picture, newrect)
-                                oldpos=y
 
                 #black-out borders
                 if not self.battleManager:

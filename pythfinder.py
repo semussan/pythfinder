@@ -110,7 +110,7 @@ def handle_user_input(model,camera,console):
         pos = pygame.mouse.get_pos()
         if keyStatus[MOUSEBUTTONDOWN]:
             trans=camera.xyToModel(mousex,mousey)
-            target = model.world.click(trans[0],trans[1],button,camera)
+            target = model.world.click(trans[0],trans[1],button,camera, not keyStatusLast[MOUSEBUTTONUP])
             if newPress(MOUSEBUTTONDOWN):
                     camera.target=target
                     
