@@ -20,8 +20,12 @@ def getNeighbors(widthx,widthy,x,y,camera):
 
 class FoWMap():
     fogImg=[None for x in range(3)]
-    def __init__(self,rect):
-        self.foglevels=[[2 for x in range(rect[3])] for x in range(rect[2])]
+    def __init__(self,rect,hasShadows):
+        level=0
+        if hasShadows:
+            level=2
+            
+        self.foglevels=[[level for x in range(rect[3])] for x in range(rect[2])]
         self.rect=rect
 
 
@@ -42,6 +46,7 @@ class FoWMap():
                     self.drawSingleFoW(screen, camera, x,y,self.foglevels[x][y])
                     
     def click(self, x,y,clicktype,camera):
+        camera.target=None
         if clicktype==1:
             self.foglevels[x][y]=0
             for neighbor in getNeighbors(self.rect[2],self.rect[3],x,y,camera):
@@ -51,13 +56,22 @@ class FoWMap():
                     else:
                         self.foglevels[neighbor[0]][neighbor[1]]=1
         if clicktype==2:
-            self.foglevels[x][y]=2
+            if self.foglevels[x][y] is not 2:
+                self.foglevels[x][y]=1#was 2
             for neighbor in getNeighbors(self.rect[2],self.rect[3],x,y,camera):
                 if self.foglevels[neighbor[0]][neighbor[1]]<2:
                     if abs(neighbor[0]-x)+abs(neighbor[1]-y)<=1:
-                        self.foglevels[neighbor[0]][neighbor[1]]=2
+                        self.foglevels[neighbor[0]][neighbor[1]]=1 #was 2
                     else:
                         self.foglevels[neighbor[0]][neighbor[1]]=1
+        if clicktype==3:
+            self.foglevels[x][y]=2#was 2
+            for neighbor in getNeighbors(self.rect[2],self.rect[3],x,y,camera):
+                if self.foglevels[neighbor[0]][neighbor[1]]<2:
+                    if abs(neighbor[0]-x)+abs(neighbor[1]-y)<=1:
+                        self.foglevels[neighbor[0]][neighbor[1]]=2 #was 2
+                    else:
+                        self.foglevels[neighbor[0]][neighbor[1]]=2
         #print self.foglevels[x][y]
 
 class Background():
@@ -65,9 +79,7 @@ class Background():
         self.imgName=imgName
         self.rect=rect
         self.hasShadows=hasShadows
-        self.FoW=None
-        if hasShadows:
-            self.FoW=FoWMap(rect)
+        self.FoW=FoWMap(rect,hasShadows)
         if imgName not in imgCache:
             imgCache[imgName]=pygame.image.load(imgName)
             
@@ -83,6 +95,7 @@ class Background():
             self.FoW.draw(screen, camera)
 
     def click(self, x,y,clicktype,camera):
+        camera.target=None
         if self.FoW and camera.drawShadows:
             self.FoW.click(x,y,clicktype,camera)
 
@@ -102,9 +115,10 @@ class world():
     def load(self, mapFileName):
         self.backgrounds=[]
         self.imgs=[]
+        self.sprites=[]
         self.soundManager.reset()
-        f = open('maps/'+mapFileName, 'rb')
-        subdir='/'.join(('maps/'+mapFileName).split('/')[:-1]) + '/' 
+        f = open(mapFileName, 'rb')
+        subdir='/'.join(('maps/'+mapFileName).split('/')[1:-1]) + '/' 
         for mapLine in f:
             parsed=mapLine.strip().split(' ')
             linetype, args = (parsed[0],parsed[1:])
@@ -124,17 +138,32 @@ class world():
             #        tileCache[filename]=pygame.image.load(subdir+filename)
             #    self.tiles.append((int(x),int(y),tileCache[filename]))
             #print x, y
+            
+    def drawHighlight(self, screen, camera, rect):
+        rect=camera.getRectForRect(rect)
+        trans=pygame.Surface((rect[2],rect[3],))
+        trans.set_alpha(128)
+        trans.fill((10,10,100))
+        screen.blit(trans, (rect[0],rect[1]))
+        
     def draw(self,screen,camera):
         for background in self.backgrounds:
             background.draw(screen, camera)
+        if camera.target:
+            camera.drawHighlight(camera.target.rect,(10,10,100),128)
+        if camera.battleManager and camera.battleManager.started and camera.battleManager.getCurPlayer():
+            camera.drawHighlight(camera.battleManager.getCurPlayer().rect,(100,10,10),128)
         for sprite in self.sprites:
             sprite.draw(screen, camera)
         for background in self.backgrounds:
             background.drawFoW(screen, camera)
+            
     def update(self):
           self.soundManager.update()
           for sprite in self.sprites:
-              sprite.update()
+              numUpdates=4 if self.camera.battleManager else 1
+              for x in range(numUpdates):
+                  sprite.update()
     def click(self, x,y,clicktype,camera):
         for sprite in self.sprites:
             ret= sprite.click(x-sprite.rect[0],y-sprite.rect[1],clicktype,camera)

@@ -2,17 +2,29 @@
 import pyconsole
 import pygame
 from pygame.locals import *
+import Tkinter, tkFileDialog, tkSimpleDialog
+
+root = Tkinter.Tk()
+root.withdraw()
+def isInt(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
 
 class camera():
-        defResx=1024
+        target=None
+        battleManager=None
+        defResx=1224
         defResy=868
-        x=0
-        y=0
-        horzTilesPerScreen=30
-        subx=100
-        suby=230
-        subwid=800
-        subhig=600
+        x=-10
+        y=-10
+        horzTilesPerScreen=42
+        subx=130
+        suby=140
+        subwid=882
+        subhig=670
         isFull=False
         drawGrid=True
         drawShadows=True
@@ -40,8 +52,8 @@ class camera():
                         self.isFull=True
 
         def getCameraCenter(self):
-            return (self.x+ self.subx/self.gridSize(),
-                    self.y+ self.suby/self.gridSize())      
+            return (self.x+ (self.subx+(self.subwid/2))/self.gridSize(),
+                    self.y+ (self.suby+(self.subhig/2))/self.gridSize())      
         def xyToModel(self,x,y):
             return ((x-self.subx)/self.gridSize()+self.x,
                     (y-self.suby)/self.gridSize()+self.y,)
@@ -61,8 +73,24 @@ class camera():
         def getRectForRect(self,rect):
             return (self.subx+(rect[0]-self.x)*self.gridSize(),
                     self.suby+(rect[1]-self.y)*self.gridSize(),
-                    self.subx+(rect[0]+rect[2]-self.x)*self.gridSize(),
-                    self.suby+(rect[1]+rect[3]-self.y)*self.gridSize())
+                    rect[2]*self.gridSize(),
+                    rect[3]*self.gridSize())
+        def quickFile(self):
+                return tkFileDialog.askopenfilename()
+        def quickDialog(self,prompt):
+                return tkSimpleDialog.askstring("",prompt)
+        def quickInt(self,prompt):
+                ret=False
+                while not ret:
+                        str=tkSimpleDialog.askstring("",prompt)
+                        ret=isInt(str)
+                return int(str)
+        def drawHighlight(self, rect, color, alpha):
+                rect=self.getRectForRect(rect)
+                trans=pygame.Surface((rect[2],rect[3],))
+                trans.set_alpha(alpha)
+                trans.fill(color)
+                self.screen.blit(trans, (rect[0],rect[1]))
         def drawWorld(self,model,console):
                 gridSize=self.gridSize
                 
@@ -81,7 +109,6 @@ class camera():
                 #gridlines
                 if self.drawGrid:
                         if (self.resx,self.resy) not in self.vert:
-                                print 'pow'
                                 self.vert[(self.resx,self.resy)]=pygame.image.load('coreImgs/vert.png')
                         picture = pygame.transform.scale(self.vert[(self.resx,self.resy)], (3, self.resy))
                         newrect = picture.get_rect()
@@ -102,10 +129,14 @@ class camera():
                                 oldpos=y
 
                 #black-out borders
-                pygame.draw.rect(self.screen,(0,0,0),(0,0,self.resx,self.suby),0)
-                pygame.draw.rect(self.screen,(0,0,0),(self.subx+self.subwid,0,self.resx,self.resy),0)
-                pygame.draw.rect(self.screen,(0,0,0),(0,self.suby+self.subhig,self.resx,self.resy),0)
-                pygame.draw.rect(self.screen,(0,0,0),(0,0,self.subx,self.resy),0)
+                if not self.battleManager:
+                        color=(0,0,0)
+                else:
+                        color=(60,0,0)
+                pygame.draw.rect(self.screen,color,(0,0,self.resx,self.suby),0)
+                pygame.draw.rect(self.screen,color,(self.subx+self.subwid,0,self.resx,self.resy),0)
+                pygame.draw.rect(self.screen,color,(0,self.suby+self.subhig,self.resx,self.resy),0)
+                pygame.draw.rect(self.screen,color,(0,0,self.subx,self.resy),0)
                 if console.active:
                         console.draw()
 
