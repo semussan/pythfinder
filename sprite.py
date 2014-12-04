@@ -84,12 +84,19 @@ class Sprite():
                      newrect[2],newrect[3])
             screen.blit(drawimg,newrect)       
         else:
-            if not self.deadImg:
-                self.deadImg= pygame.transform.scale(pygame.image.load('coreImgs/bones.png'), (self.rect[2]*camera.gridSize(),
-                                                           self.rect[3]*camera.gridSize()))
-            newrect = self.deadImg.get_rect()
-            newrect = newrect.move(self.rect[0],self.rect[1])
-            screen.blit(self.deadImg,camera.getRectForRect(newrect))   
+            if not self.portrait:
+                if not self.deadImg:
+                    self.deadImg= pygame.transform.scale(pygame.image.load('coreImgs/bones.png'), (self.rect[2]*camera.gridSize(),
+                                                               self.rect[3]*camera.gridSize()))
+                newrect = self.deadImg.get_rect()
+                newrect = newrect.move(self.rect[0],self.rect[1])
+                screen.blit(self.deadImg,camera.getRectForRect(newrect))
+            else:
+                if not self.deadImg:
+                    self.deadImg= pygame.transform.rotate(self.imgs[0] ,-90)
+                newrect = self.deadImg.get_rect()
+                newrect = newrect.move(self.rect[0],self.rect[1])
+                screen.blit(self.deadImg,camera.getRectForRect(newrect))
             
                
     def update(self):
