@@ -16,13 +16,13 @@ def isInt(s):
 class camera():
         target=None
         battleManager=None
-        defResx=1224
-        defResy=868
+        defSubx=908
+        defSuby=140
+        defPadding=20
         x=-10
         y=-10
         horzTilesPerScreen=42
-        subx=130
-        suby=140
+        subx, suby =(defPadding,defPadding)
         subwid=882
         subhig=670
         dialogTime=6*40 #6sec * 40fps
@@ -31,8 +31,7 @@ class camera():
         drawShadows=True
         vert={}
         horz={}
-        resx=defResx
-        resy=defResy
+        resx, resy =(defPadding*2+subwid,defPadding*2+subhig)
         dialogs={}
 
         
@@ -47,11 +46,13 @@ class camera():
 
         def toggleFull(self):
                 if self.isFull:
-                        self.resx, self.resy =(self.defResx,self.defResy)
+                        self.subx, self.suby =(self.defPadding,self.defPadding)
+                        self.resx, self.resy =(self.defPadding*2+self.subwid,self.defPadding*2+self.subhig)
                         pygame.display.set_mode((self.resx, self.resy))
                         self.isFull=False
                 else:
                         self.resx, self.resy =(1920,1080)
+                        self.subx, self.suby =(self.defSubx,self.defSuby)
                         pygame.display.set_mode((self.resx,self.resy),  FULLSCREEN)
                         self.isFull=True
 
