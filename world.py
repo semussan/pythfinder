@@ -135,10 +135,12 @@ class world():
     imgs=[]
     soundManager=None
     sprites=[]
+    joystickBindings={}
     def __init__(self, screen, camera):
         self.screen=screen
         self.camera=camera
         self.soundManager=SoundManager(camera)
+        pygame.joystick.init()
         pygame.init() 
     def load(self, mapFileName):
         self.backgrounds=[]
@@ -146,7 +148,8 @@ class world():
         self.sprites=[]
         self.soundManager.reset()
         f = open(mapFileName, 'rb')
-        subdir='/'.join(('maps/'+mapFileName).split('/')[1:-1]) + '/' 
+        subdir='/'.join(('maps/'+mapFileName).split('/')[1:-1]) + '/'
+        #LoadWorld
         for mapLine in f:
             parsed=mapLine.strip().split(' ')
             linetype, args = (parsed[0],parsed[1:])
@@ -157,9 +160,23 @@ class world():
                 x,y,vol,filename = args
                 self.soundManager.addBG(int(x),int(y),float(vol),subdir+filename.strip())
             if linetype == 'npc':
-                x,y,width, height , movable, cycleTime, filename = args
-                self.sprites.append(Sprite(subdir+filename.strip(),(int(x),int(y),int(width),int(height), ),movable == 'True' , int(cycleTime)))
-            
+                x,y,width, height , maxHealth, movable, cycleTime, filename = args
+                self.sprites.append(Sprite(subdir+filename.strip(),(int(x),int(y),int(width),int(height), ), int(maxHealth),movable == 'True' , int(cycleTime)))
+        #LoadPlayers
+        joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
+        playersFile=open(subdir+'players','rb')
+        for player in playersFile:
+            parsed=player.strip().split(' ')
+            linetype, args = (parsed[0],parsed[1:])
+            if linetype == 'npc':
+                x,y,width, height , maxHealth, movable, cycleTime, filename = args
+                newChar=Sprite(subdir+filename.strip(),(int(x),int(y),int(width),int(height), ), int(maxHealth),movable == 'True' , int(cycleTime))
+                self.sprites.append(newChar)
+                if joysticks:
+                    newJoystick=joysticks.pop()
+                    newJoystick.init()
+                    self.joystickBindings[newJoystick]=newChar
+        print "Joysticks!", self.joystickBindings
             #if linetype is 't':#tile
             #    x,y,filename = args
             #    if filename not in tileCache:

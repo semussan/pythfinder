@@ -13,6 +13,11 @@ BLACK= (0,0,0)
 running = True
 keyStatus=defaultdict(lambda :False)
 keyStatusLast=defaultdict(lambda :False)
+joyStatus=defaultdict(lambda :False)
+joyStatusLast=defaultdict(lambda :False)
+joyHatStatus=defaultdict(lambda :(0,0))
+joyHatStatusLast=defaultdict(lambda :(0,0))
+joyHatStatusLastLast=defaultdict(lambda :(0,0))
 mousex, mousey,button=0,0,0
 
 
@@ -39,9 +44,16 @@ def isCtrl():
 def newPress(key):
         global keyStatus,keyStatusLast
         return not keyStatusLast[key] and keyStatus[key]
+def newJoyPress(joy_ID, button):
+        global joyStatus,joyStatusLast
+        return not joyStatusLast[joy_ID, button] and joyStatus[joy_ID, button]
+def newJoyHatPress(joy_ID):
+        global joyHatStatus,joyHatStatusLast,joyHatStatusLastLast
+        return joyHatStatusLastLast[joy_ID] == (0,0) and joyHatStatusLast[joy_ID] == (0,0)  and joyHatStatus[joy_ID] != (0,0)
+        
         
 def handle_user_input(model,camera,console):
-        global keyStatus,keyStatusLast
+        global keyStatus,keyStatusLast,joyStatus,joyStatusLast,joyStatusLastLast,joyHatStatusLastLast
         def shiftMod():
             return 5 if keyStatus[K_LSHIFT] else 1
 
@@ -69,6 +81,38 @@ def handle_user_input(model,camera,console):
                     keyStatus[MOUSEBUTTONDOWN]=True
                     global button
                     button=event.button
+        #Handle player controller input
+        for joystick, player in model.world.joystickBindings.iteritems():
+                numButtons = joystick.get_numbuttons()
+                for i in range(numButtons):
+                        joyStatus[joystick.get_id(),i]=joystick.get_button( i )
+                joyHatStatus[joystick.get_id()]=joystick.get_hat(0)
+
+                #Dpad movement
+                if newJoyHatPress(joystick.get_id()):
+                        moveX,moveY=joystick.get_hat(0)
+                        player.move(moveX,-moveY)
+                        model.world.click(player.rect[0],player.rect[1],1,camera, False)
+
+                #Interact
+                if newJoyPress(joystick.get_id(),0):
+                        print "Interact!", joystick.get_id()
+
+                #Talk
+                if newJoyPress(joystick.get_id(),1):
+                        print "Talk!", joystick.get_id()
+
+                #HealthDown
+                if newJoyPress(joystick.get_id(),2):
+                        print "HealthDown!", joystick.get_id()
+                        player.damage(+1)
+                        
+                #HealthUp
+                if newJoyPress(joystick.get_id(),3):
+                        print "HealthUp!", joystick.get_id()
+                        player.damage(-1)
+                        
+
                         
         #camera and target movement
         if camera.target:
@@ -106,6 +150,25 @@ def handle_user_input(model,camera,console):
 
         if newPress(K_BACKQUOTE):
                 console.active=True
+
+        if newPress(K_MINUS) and camera.target:
+                camera.target.damage(1)
+        if newPress(K_EQUALS) and camera.target:
+                camera.target.damage(-1)
+                print 'POW'
+                
+        if newPress(K_DELETE) and camera.target:
+                if not camera.target.dead:
+                        camera.target.dead=True
+                        camera.target.movable=False
+                        if camera.battleManager:
+                                camera.battleManager.removePlayer(camera.target)
+                                camera.target=camera.battleManager.getCurPlayer()
+                        else:
+                                camera.target=None
+                else:
+                        camera.target.rect=(-99,-99,0,0)
+                        camera.target=None
                 
         pos = pygame.mouse.get_pos()
         if keyStatus[MOUSEBUTTONDOWN]:
@@ -144,6 +207,10 @@ def handle_user_input(model,camera,console):
                                         camera.target=camera.battleManager.getCurPlayer()
 
         keyStatusLast=copy.deepcopy(keyStatus)
+        joyStatusLast=copy.deepcopy(joyStatus)
+        joyHatStatusLast=copy.deepcopy(joyHatStatus)
+        joyStatusLastLast=copy.deepcopy(joyStatusLast)
+        joyHatStatusLastLast=copy.deepcopy(joyHatStatusLast)
 
         
 

@@ -13,6 +13,7 @@ def getAllFiles(fileName):
     return files
 
 files = [f for f in os.listdir('.') if os.path.isfile(f)]
+
 class Sprite():
     img=None
     picture=None
@@ -21,10 +22,12 @@ class Sprite():
     def onClick(self,x,y,clicktype,camera):
         pass
         #print 'Click for', self.imgName
-    def __init__(self,imgName,rect,movable=True, cycleTime=100):
+    def __init__(self,imgName,rect, maxHealth,movable=True, cycleTime=100):
 
 
         self.imgName=imgName
+        self.maxHealth=maxHealth
+        self.hp=self.maxHealth
         self.rect=rect
         self.imgs=[]
         for f in getAllFiles(imgName):
@@ -37,10 +40,22 @@ class Sprite():
         getAllFiles(imgName)
         self.timer=0
         self.switchTime=cycleTime
+        self.dead=False
+        self.deadImg=None
 
         #self.draw=draw
 
         #self.onClick=onClick
+        
+    def damage(self, damage):
+        self.hp-=damage
+        if self.hp<=0:
+            self.dead=True
+            self.movable=False
+        if self.hp>0:
+            self.dead=False
+            self.movable=True
+            
     def move(self, xoff,yoff):
         if self.movable:
             self.rect=(self.rect[0] + xoff,
@@ -56,18 +71,27 @@ class Sprite():
         #if not self.picture:
         #    self.picture= pygame.transform.scale(self.img, (self.rect[2]*camera.gridSize(),
         #                                                self.rect[3]*camera.gridSize()))
-        curImg=self.imgs[(self.timer/self.switchTime)%len(self.imgs)]
-        drawimg=curImg
-        if not self.facingRight:
-            drawimg=pygame.transform.flip(curImg,True,False)
+        if not self.dead:
+            curImg=self.imgs[(self.timer/self.switchTime)%len(self.imgs)]
+            drawimg=curImg
+            if not self.facingRight:
+                drawimg=pygame.transform.flip(curImg,True,False)
+                
+            newrect = curImg.get_rect()
+            newrect[0], newrect[1] = (self.rect[0],self.rect[1])
+            newrect=camera.getRectForRect(newrect)
+            newrect=(newrect[0],newrect[1]-(curImg.get_height()-(self.rect[3]*camera.gridSize())),
+                     newrect[2],newrect[3])
+            screen.blit(drawimg,newrect)       
+        else:
+            if not self.deadImg:
+                self.deadImg= pygame.transform.scale(pygame.image.load('coreImgs/bones.png'), (self.rect[2]*camera.gridSize(),
+                                                           self.rect[3]*camera.gridSize()))
+            newrect = self.deadImg.get_rect()
+            newrect = newrect.move(self.rect[0],self.rect[1])
+            screen.blit(self.deadImg,camera.getRectForRect(newrect))   
             
-        newrect = curImg.get_rect()
-        newrect[0], newrect[1] = (self.rect[0],self.rect[1])
-        newrect=camera.getRectForRect(newrect)
-        newrect=(newrect[0],newrect[1]-(curImg.get_height()-(self.rect[3]*camera.gridSize())),
-                 newrect[2],newrect[3])
-
-        screen.blit(drawimg,newrect )        
+               
     def update(self):
         self.timer+=1
     def click(self, x,y,clicktype,camera):
