@@ -3,9 +3,10 @@ import pygame
 from sprite import Sprite
 from pygame.locals import *
 from sound import SoundManager
+import os
+import random
 tileCache={}
 imgCache={}
-
 
 
 def getNeighbors(widthx,widthy,x,y,camera):
@@ -135,7 +136,9 @@ class world():
     imgs=[]
     soundManager=None
     sprites=[]
+    blood=[]
     joystickBindings={}
+    bloodImgs=None
     def __init__(self, screen, camera):
         self.screen=screen
         self.camera=camera
@@ -146,6 +149,7 @@ class world():
         self.backgrounds=[]
         self.imgs=[]
         self.sprites=[]
+        self.blood=[]
         self.soundManager.reset()
         f = open(mapFileName, 'rb')
         subdir='/'.join(('maps/'+mapFileName).split('/')[1:-1]) + '/'
@@ -194,6 +198,8 @@ class world():
     def draw(self,screen,camera):
         for background in self.backgrounds:
             background.draw(screen, camera)
+        for bloodDrop in self.blood:
+            self.screen.blit(bloodDrop[2],camera.getRectForRect((bloodDrop[0],bloodDrop[1],1,1)))
         if camera.target:
             camera.drawHighlight(camera.target.rect,(10,10,100),128)
         if camera.battleManager and camera.battleManager.started and camera.battleManager.getCurPlayer():
@@ -202,7 +208,15 @@ class world():
             sprite.draw(screen, camera)
         for background in self.backgrounds:
             background.drawFoW(screen, camera)
-            
+    def addBlood(self,x,y):
+        if not self.bloodImgs:
+            bloodDir='./coreImgs/blood/'
+            filelist = [bloodDir+f for f in os.listdir(bloodDir)]
+            self.bloodImgs=[]
+            for filename in filelist:
+                self.bloodImgs.append(pygame.image.load(filename))
+        self.blood.append((x,y,random.choice(self.bloodImgs)))
+        print self.blood
     def update(self):
           self.soundManager.update()
           self.sprites=sorted(self.sprites, key=lambda x: x.rect[1])#sort by height

@@ -93,6 +93,8 @@ def handle_user_input(model,camera,console):
                         moveX,moveY=joystick.get_hat(0)
                         player.move(moveX,-moveY)
                         model.world.click(player.rect[0],player.rect[1],1,camera, False)
+                        if player.maxHealth/2>player.hp:
+                                model.world.addBlood(player.rect[0],player.rect[1])
 
                 #Interact
                 if newJoyPress(joystick.get_id(),0):
@@ -101,6 +103,7 @@ def handle_user_input(model,camera,console):
                 #Talk
                 if newJoyPress(joystick.get_id(),1):
                         print "Talk!", joystick.get_id()
+                        camera.addDialog(player,'Left')
 
                 #HealthDown
                 if newJoyPress(joystick.get_id(),2):
@@ -118,6 +121,8 @@ def handle_user_input(model,camera,console):
         if camera.target:
                 if newPress(K_d) or newPress(K_RIGHT):
                         camera.target.move(1,0)
+                        if camera.target.maxHealth/2>camera.target.hp:
+                                model.world.addBlood(player.rect[0],player.rect[1])
                 if newPress(K_a) or newPress(K_LEFT):
                         camera.target.move(-1,0)
                 if newPress(K_w) or newPress(K_UP):
@@ -241,6 +246,7 @@ if __name__ == '__main__':
                         camera.drawWorld(model,console)
                         handle_user_input(model,camera,console)
                         model.world.update()
+                        camera.update()
                         pygame.display.update()
                         deltat = clock.tick(FRAMES_PER_SECOND)
                 #except Exception, e:

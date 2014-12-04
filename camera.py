@@ -25,6 +25,7 @@ class camera():
         suby=140
         subwid=882
         subhig=670
+        dialogTime=6*40 #6sec * 40fps
         isFull=False
         drawGrid=True
         drawShadows=True
@@ -32,6 +33,9 @@ class camera():
         horz={}
         resx=defResx
         resy=defResy
+        dialogs={}
+
+        
         def inBounds(self,rect,x,y):
             if x>=rect[0] and x<rect[0]+rect[2] and y>=rect[1] and y<rect[1]+rect[3]:
                 return True
@@ -91,6 +95,11 @@ class camera():
                 trans.set_alpha(alpha)
                 trans.fill(color)
                 self.screen.blit(trans, (rect[0],rect[1]))
+        def addBlood(self,player,side):
+            self.dialogs[player]={'timeRemaining':self.dialogTime,'Side':side}
+        def addDialog(self,player,side):
+            self.dialogs[player]={'timeRemaining':self.dialogTime,'Side':side}
+                
 ##        def drawGridlines(self):
 ##            #gridlines
 ##            if self.drawGrid:
@@ -113,7 +122,10 @@ class camera():
 ##                            newrect = newrect.move(0,y-oldpos)
 ##                            self.screen.blit(picture, newrect)
 ##                            oldpos=y
-        
+        def update(self):
+            for player in self.dialogs:
+                self.dialogs[player]['timeRemaining']-=1
+            self.dialogs={key:value for key,value in self.dialogs.iteritems() if value['timeRemaining']>=0}
         def drawWorld(self,model,console):
                 gridSize=self.gridSize
                 
@@ -142,4 +154,30 @@ class camera():
                 pygame.draw.rect(self.screen,color,(0,0,self.subx,self.resy),0)
                 if console.active:
                         console.draw()
+
+                #Organize Dialogs
+                leftDialogs=[]
+                rightDialogs=[]
+                for player in self.dialogs:
+                    if self.dialogs[player]['Side'].lower()=='left':
+                        leftDialogs.append(player)
+                    else:
+                        rightDialogs.append(player)
+                leftDialogs = sorted(leftDialogs, key=lambda x:-self.dialogs[x]['timeRemaining'])
+                rightDialogs = sorted(rightDialogs, key=lambda x:-self.dialogs[x]['timeRemaining'])
+                #Draw dialogs
+                space=10
+                runningOffset=0
+                borderOffsets=(40,120)
+                for player in leftDialogs:
+                    if player.portrait:
+                        #ar=float(player.rect[2])/player.rect[3]
+                        newRect=player.portrait.get_rect()
+                        newRect=newRect.move(self.subx+runningOffset+borderOffsets[0],
+                                             self.suby+self.subhig-newRect[3]-borderOffsets[1])
+                        self.screen.blit(player.portrait, newRect)
+                        runningOffset+=space+newRect[2]
+                        
+                    
+                    
 
