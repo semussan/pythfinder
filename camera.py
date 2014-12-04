@@ -3,6 +3,7 @@ import pyconsole
 import pygame
 from pygame.locals import *
 import Tkinter, tkFileDialog, tkSimpleDialog
+from sound import SoundManager
 
 root = Tkinter.Tk()
 root.withdraw()
@@ -33,6 +34,7 @@ class camera():
         horz={}
         resx, resy =(defPadding*2+subwid,defPadding*2+subhig)
         dialogs={}
+        soundManager=None
 
         
         def inBounds(self,rect,x,y):
@@ -43,6 +45,7 @@ class camera():
 
         def __init__(self, screen):
                 self.screen=screen
+                self.soundManager=SoundManager(self)
 
         def toggleFull(self):
                 if self.isFull:
@@ -82,6 +85,8 @@ class camera():
                     rect[3]*self.gridSize())
         def quickFile(self):
                 return tkFileDialog.askopenfilename()
+        def quickSaveFile(self):
+                return tkFileDialog.asksaveasfilename()
         def quickDialog(self,prompt):
                 return tkSimpleDialog.askstring("",prompt)
         def quickInt(self,prompt):
@@ -96,8 +101,6 @@ class camera():
                 trans.set_alpha(alpha)
                 trans.fill(color)
                 self.screen.blit(trans, (rect[0],rect[1]))
-        def addBlood(self,player,side):
-            self.dialogs[player]={'timeRemaining':self.dialogTime,'Side':side}
         def addDialog(self,player,side):
             self.dialogs[player]={'timeRemaining':self.dialogTime,'Side':side}
                 
@@ -124,6 +127,7 @@ class camera():
 ##                            self.screen.blit(picture, newrect)
 ##                            oldpos=y
         def update(self):
+            self.soundManager.update()
             for player in self.dialogs:
                 self.dialogs[player]['timeRemaining']-=1
             self.dialogs={key:value for key,value in self.dialogs.iteritems() if value['timeRemaining']>=0}

@@ -2,9 +2,9 @@
 import pygame
 from sprite import Sprite
 from pygame.locals import *
-from sound import SoundManager
 import os
 import random
+import types
 tileCache={}
 imgCache={}
 
@@ -32,6 +32,8 @@ class FoWMap():
 
     def drawSingleFoW(self, screen, camera, x,y,level):
         rect=camera.getRectForXY(self.rect[0]+x,self.rect[1]+y)
+        if self.fogImg is None:
+            self.fogImg=[None for x in range(3)]
         if self.fogImg[level] is None:
             trans=pygame.Surface((rect[2],rect[3],))
             trans.set_alpha(level*128)
@@ -81,8 +83,9 @@ class Background():
         self.rect=rect
         self.hasShadows=hasShadows
         self.FoW=FoWMap(rect,hasShadows)
-        if imgName not in imgCache:
-            imgCache[imgName]=pygame.image.load(imgName)
+        self.img=pygame.image.load(imgName)
+        #if imgName not in imgCache:
+        #    imgCache[imgName]=pygame.image.load(imgName)
             
     def drawGridlines(self,camera):
         #gridlines
@@ -111,7 +114,10 @@ class Background():
                         camera.screen.blit(picture, newrect)
                         oldpos=y            
     def draw(self, screen, camera):
-        picture = pygame.transform.scale(imgCache[self.imgName], (self.rect[2]*camera.gridSize(),
+        if self.img is None:
+            self.img=pygame.image.load(self.imgName)
+            
+        picture = pygame.transform.scale(self.img, (self.rect[2]*camera.gridSize(),
                                                                   self.rect[3]*camera.gridSize()))
         newrect = picture.get_rect()
         newrect = newrect.move(self.rect[0],self.rect[1])
@@ -131,18 +137,15 @@ class Background():
     def getBounds(self):
         return self.rect
 
-class world():
+class World():
     backgrounds=[]
     imgs=[]
-    soundManager=None
     sprites=[]
     blood=[]
     joystickBindings={}
     bloodImgs=None
-    def __init__(self, screen, camera):
-        self.screen=screen
+    def __init__(self,  camera):
         self.camera=camera
-        self.soundManager=SoundManager(camera)
         pygame.joystick.init()
         pygame.init() 
     def load(self, mapFileName):
@@ -150,9 +153,10 @@ class world():
         self.imgs=[]
         self.sprites=[]
         self.blood=[]
-        self.soundManager.reset()
+        self.camera.soundManager.reset()
         f = open(mapFileName, 'rb')
         subdir='/'.join(('maps/'+mapFileName).split('/')[1:-1]) + '/'
+        lastNPC=None
         #LoadWorld
         for mapLine in f:
             parsed=mapLine.strip().split(' ')
@@ -162,10 +166,16 @@ class world():
                 self.backgrounds.append(Background(subdir+filename.strip(),(int(x),int(y),int(wid),int(hig), ), None,hasShadows == 'True' ))
             if linetype == 'sound':#sound
                 x,y,vol,filename = args
-                self.soundManager.addBG(int(x),int(y),float(vol),subdir+filename.strip())
+                self.camera.soundManager.addBG(int(x),int(y),float(vol),subdir+filename.strip())
             if linetype == 'npc':
                 x,y,width, height , maxHealth, movable, cycleTime, filename = args
-                self.sprites.append(Sprite(subdir+filename.strip(),(int(x),int(y),int(width),int(height), ), int(maxHealth),movable == 'True' , int(cycleTime)))
+                lastNPC=Sprite(self.camera,subdir+filename.strip(),(int(x),int(y),int(width),int(height), ), int(maxHealth),movable == 'True' , int(cycleTime))
+                self.sprites.append(lastNPC)
+            if linetype =='interaction' and lastNPC:
+                command="def interactionFunc(self): " + " ".join(args)
+                exec command
+                print interactionFunc
+                lastNPC.interaction = types.MethodType( interactionFunc, lastNPC )
         #LoadPlayers
         joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
         playersFile=open(subdir+'players','rb')
@@ -174,7 +184,7 @@ class world():
             linetype, args = (parsed[0],parsed[1:])
             if linetype == 'npc':
                 x,y,width, height , maxHealth, movable, cycleTime, filename = args
-                newChar=Sprite(subdir+filename.strip(),(int(x),int(y),int(width),int(height), ), int(maxHealth),movable == 'True' , int(cycleTime))
+                newChar=Sprite(self.camera, subdir+filename.strip(),(int(x),int(y),int(width),int(height), ), int(maxHealth),movable == 'True' , int(cycleTime))
                 self.sprites.append(newChar)
                 if joysticks:
                     newJoystick=joysticks.pop()
@@ -199,7 +209,7 @@ class world():
         for background in self.backgrounds:
             background.draw(screen, camera)
         for bloodDrop in self.blood:
-            self.screen.blit(bloodDrop[2],camera.getRectForRect((bloodDrop[0],bloodDrop[1],1,1)))
+            screen.blit(bloodDrop[2],camera.getRectForRect((bloodDrop[0],bloodDrop[1],1,1)))
         if camera.target:
             camera.drawHighlight(camera.target.rect,(10,10,100),128)
         if camera.battleManager and camera.battleManager.started and camera.battleManager.getCurPlayer():
@@ -218,12 +228,21 @@ class world():
         self.blood.append((x,y,random.choice(self.bloodImgs)))
         print self.blood
     def update(self):
-          self.soundManager.update()
           self.sprites=sorted(self.sprites, key=lambda x: x.rect[1])#sort by height
           for sprite in self.sprites:
               numUpdates=4 if self.camera.battleManager else 1
               for x in range(numUpdates):
                   sprite.update()
+    def interact(self, player):
+        if player.lastMove:
+            px,py=player.rect[0],player.rect[1]
+            x,y=(player.lastMove[0]+px,player.lastMove[1]+py)#get where the player was 'facing'
+            for sprite in self.sprites:
+                if self.camera.inBounds(sprite.rect, x,y):
+                    if sprite.interaction:
+                        sprite.interaction()
+                    return
+            
     def click(self, x,y,clicktype,camera, newClick):
         if newClick:
             for sprite in self.sprites:

@@ -1,7 +1,7 @@
 import pygame
 import os
 
-class bgtrack():
+class Bgtrack():
     def __init__(self, x, y, vol, filename):
         self.x=x
         self.y=y
@@ -16,6 +16,7 @@ class bgtrack():
         
 
 class SoundManager():
+    bgtracksSaves=[]
     bgtracks=[]
     def __init__(self,camera):
         self.camera=camera
@@ -24,12 +25,12 @@ class SoundManager():
         for bg in self.bgtracks:
             bg.soundobj.stop()
         self.bgtracks=[]
+        bgtracksSaves=[]
         
-        
-    def addBG(self,x,y,vol,filename):
-        self.bgtracks.append(bgtrack(x,y,vol,filename))
-              
     def update(self):
+        if self.bgtracksSaves and not self.bgtracks:
+            for bgsave in self.bgtracksSaves:
+                self.bgtracks.append(Bgtrack(*bgsave))
         for bgtrack in self.bgtracks:
             camx, camy=self.camera.getCameraCenter()
             dist=((bgtrack.x-camx)**2 + (bgtrack.y-camy)**2)**.5
@@ -37,4 +38,15 @@ class SoundManager():
             falloffPower=2.6
             if dist<saturationRange : dist=saturationRange
             bgtrack.setDistVolume((saturationRange**falloffPower)/(dist**falloffPower))
+                
         
+    def addBG(self,x,y,vol,filename):
+        self.bgtracks.append(Bgtrack(x,y,vol,filename))
+        self.bgtracksSaves.append((x,y,vol,filename))
+        
+    def playOnce(self,filename,vol):
+        sound = pygame.mixer.Sound(filename)
+        sound.set_volume(vol)
+        sound.play(0)
+              
+

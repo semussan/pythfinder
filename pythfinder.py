@@ -1,13 +1,19 @@
 
 import pygame
 import copy
+import datetime
+import dill
 from sprite import Sprite
-from world import world
+from World import World
 from camera import camera
 from pygame.locals import *
 from collections import defaultdict
 import pyconsole
 from BattleManager import BattleManager
+import os
+import glob
+
+
 screen = None
 BLACK= (0,0,0)
 running = True
@@ -20,22 +26,43 @@ joyHatStatusLast=defaultdict(lambda :(0,0))
 joyHatStatusLastLast=defaultdict(lambda :(0,0))
 mousex, mousey,button=0,0,0
 
+def getLatestSaveFile():
+        return max(glob.iglob(os.path.join('saves', '*.save')), key=os.path.getctime)
 
-class char():
-        x=50
-        y=50
-class model():
-        def __init__(self, screen,camera):
-                self.char=char()
-                self.world=world(screen, camera)
-def drawAt(imgName, x,y):
-        img = pygame.image.load(imgName)
-        screen.blit(img, (x,y))
-        pygame.display.flip()
-class feyAdventure():
+
+def writeState(filename,model,camera):
+        for sprite in model.world.sprites:
+                sprite.imgs=None
+                sprite.portrait=None
+                sprite.deadImg=None
+        for background in model.world.backgrounds:
+                background.img=None
+                background.FoW.fogImg=None
+                background.bloodImgs=None
+        camera.vert={}
+        camera.horz={}
+        camera.battleManager=None
+        camera.soundManager.bgtracks=[]
+        screensave=camera.screen
+        camera.screen=None
+        with open(filename+'.save','wb') as saveFile:
+                saveFile.write(dill.dumps([model,camera]))
+        camera.screen=screensave
+        
+def loadState(filename):
+        global transferModel, transferCamera,camera
+        screensave=camera.screen
+        
+        with open(filename,'rb') as saveFile:
+                transferModel, transferCamera=dill.load(saveFile)
+        transferCamera.screen=screensave
+class Model():
+        def __init__(self, camera):
+                self.world=World( camera)
+class Adventure():
         model=None
-        def __init__(self,screen, camera):
-                self.model=model(screen, camera)
+        def __init__(self, camera,mapFile,):
+                self.model=Model( camera)
                 self.model.world.load('maps/fey/bridge.map')
         
 def isCtrl():
@@ -99,6 +126,7 @@ def handle_user_input(model,camera,console):
                 #Interact
                 if newJoyPress(joystick.get_id(),0):
                         print "Interact!", joystick.get_id()
+                        model.world.interact(player)
 
                 #Talk
                 if newJoyPress(joystick.get_id(),1):
@@ -156,11 +184,32 @@ def handle_user_input(model,camera,console):
         if newPress(K_BACKQUOTE):
                 console.active=True
 
+        #Quicksave
+        if newPress(K_F5):
+                writeState('saves/'+datetime.datetime.now().strftime("%I.%M%p on %B %d, %Y"),model,camera)
+                #camera.quickSaveFile())
+        #Quickload
+        if newPress(K_F9):
+                loadState(getLatestSaveFile())
+                #camera.quickSaveFile())
+
+        #ManualSave
+        if newPress(K_F11):
+                writeState(camera.quickSaveFile(),model,camera)
+        #Manual Load
+        if newPress(K_F12):
+                loadState(camera.quickFile())
+
+
+
+        if newPress(K_i):
+                model.world.interact(camera.target)
+                
+
         if newPress(K_MINUS) and camera.target:
                 camera.target.damage(1)
         if newPress(K_EQUALS) and camera.target:
                 camera.target.damage(-1)
-                print 'POW'
                 
         if newPress(K_DELETE) and camera.target:
                 if not camera.target.dead:
@@ -217,22 +266,22 @@ def handle_user_input(model,camera,console):
         joyStatusLastLast=copy.deepcopy(joyStatusLast)
         joyHatStatusLastLast=copy.deepcopy(joyHatStatusLast)
 
-        
 
-        
-        
-
+transferModel=None
+transferCamera=None
 if __name__ == '__main__':
+        global transferModel, transferCamera
         screen = pygame.display.set_mode((camera.resx,camera.resy),  DOUBLEBUF)
-        camera=camera(screen)
+        camera=camera(screen)        
         console=pyconsole.Console(screen,(0,0,camera.resx,camera.resy/6))
         console.active=False
 
-        adv=feyAdventure(screen, camera)
+        adv=Adventure( camera,'maps/fey/bridge.map')
         model=adv.model
         clock = pygame.time.Clock()
         FRAMES_PER_SECOND = 40
         pygame.init()
+
         def loadMap():
                 model.world.load(camera.quickFile())
         def loadSprite(width=1,height=1):
@@ -240,15 +289,21 @@ if __name__ == '__main__':
                 x,y=0,0
                 if camera.target:
                         x,y=camera.target.rect[0],camera.target.rect[1]
-                model.world.sprites.append(Sprite(imgFile,(x,y,width,height ), True ,))
+                model.world.sprites.append(Sprite(camera,imgFile,(x,y,width,height ), True ,))
         while running:
                 #try:
+                        if transferModel and transferCamera:
+                                model=transferModel
+                                camera=transferCamera
+                                transferModel,transferCamera=None,None
                         camera.drawWorld(model,console)
                         handle_user_input(model,camera,console)
                         model.world.update()
                         camera.update()
                         pygame.display.update()
                         deltat = clock.tick(FRAMES_PER_SECOND)
+                        #loadState(camera.quickFile())
+                        #writeState(camera.quickSaveFile())
                 #except Exception, e:
                 #        running = False
                 #        print e
