@@ -59,6 +59,8 @@ class Sprite():
             
     def move(self, xoff,yoff):
         if self.movable:
+            if self.maxHealth/2>self.hp:
+                self.model.world.addBlood(self.rect[0],self.rect[1])
             self.rect=(self.rect[0] + xoff,
                        self.rect[1] + yoff,
                        self.rect[2],

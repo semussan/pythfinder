@@ -150,8 +150,6 @@ def handle_user_input(model,camera,console):
         if camera.target:
                 if newPress(K_d) or newPress(K_RIGHT):
                         camera.target.move(1,0)
-                        if camera.target.maxHealth/2>camera.target.hp:
-                                model.world.addBlood(player.rect[0],player.rect[1])
                 if newPress(K_a) or newPress(K_LEFT):
                         camera.target.move(-1,0)
                 if newPress(K_w) or newPress(K_UP):
