@@ -26,6 +26,7 @@ joyHatStatusLast=defaultdict(lambda :(0,0))
 joyHatStatusLastLast=defaultdict(lambda :(0,0))
 mousex, mousey,button=0,0,0
 
+
 def getLatestSaveFile():
         return max(glob.iglob(os.path.join('saves', '*.save')), key=os.path.getctime)
 

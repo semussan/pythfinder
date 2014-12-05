@@ -29,6 +29,7 @@ class Sprite():
     def __init__(self,model,camera,imgName,rect, maxHealth,movable=True, cycleTime=100):
         self.model=model
         self.camera=camera
+        self.isPlayer=False
         self.imgName=imgName
         self.maxHealth=maxHealth
         self.hp=self.maxHealth

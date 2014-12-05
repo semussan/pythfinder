@@ -8,11 +8,15 @@ import types
 tileCache={}
 imgCache={}
 
+areaSaves={}
 
 def getNeighbors(widthx,widthy,x,y,camera):
     posibleNeighbors=[(x-1,y),(x+1,y) ,(x,y-1) ,(x,y+1),
                        (x-2,y),(x+2,y) ,(x,y-2) ,(x,y+2),
                        (x-1,y-1),(x-1,y+1) ,(x+1,y-1) ,(x+1,y+1)]
+    posibleNeighbors.extend([(x-3,y),(x+3,y) ,(x,y-3) ,(x,y+3),
+                       (x-2,y+1),(x-2,y-1) ,(x+2,y+1) ,(x+2,y-1),
+                       (x-1,y-2),(x-1,y+2) ,(x+1,y-2) ,(x+1,y+2)])
     neighbors=[]
     for neighbor in posibleNeighbors:
         if camera.inBounds((0,0,widthx,widthy),neighbor[0],neighbor[1]):
@@ -52,7 +56,7 @@ class FoWMap():
         self.foglevels[x][y]=0
         for neighbor in getNeighbors(self.rect[2],self.rect[3],x,y,camera):
             if self.foglevels[neighbor[0]][neighbor[1]]>0:
-                if abs(neighbor[0]-x)+abs(neighbor[1]-y)<=1:
+                if abs(neighbor[0]-x)+abs(neighbor[1]-y)<=2:
                     self.foglevels[neighbor[0]][neighbor[1]]=0
                 else:
                     self.foglevels[neighbor[0]][neighbor[1]]=1
@@ -63,7 +67,7 @@ class FoWMap():
             self.foglevels[x][y]=0
             for neighbor in getNeighbors(self.rect[2],self.rect[3],x,y,camera):
                 if self.foglevels[neighbor[0]][neighbor[1]]>0:
-                    if abs(neighbor[0]-x)+abs(neighbor[1]-y)<=1:
+                    if abs(neighbor[0]-x)+abs(neighbor[1]-y)<=2:
                         self.foglevels[neighbor[0]][neighbor[1]]=0
                     else:
                         self.foglevels[neighbor[0]][neighbor[1]]=1
@@ -72,7 +76,7 @@ class FoWMap():
                 self.foglevels[x][y]=1#was 2
             for neighbor in getNeighbors(self.rect[2],self.rect[3],x,y,camera):
                 if self.foglevels[neighbor[0]][neighbor[1]]<2:
-                    if abs(neighbor[0]-x)+abs(neighbor[1]-y)<=1:
+                    if abs(neighbor[0]-x)+abs(neighbor[1]-y)<=2:
                         self.foglevels[neighbor[0]][neighbor[1]]=1 #was 2
                     else:
                         self.foglevels[neighbor[0]][neighbor[1]]=1
@@ -80,7 +84,7 @@ class FoWMap():
             self.foglevels[x][y]=2#was 2
             for neighbor in getNeighbors(self.rect[2],self.rect[3],x,y,camera):
                 if self.foglevels[neighbor[0]][neighbor[1]]<2:
-                    if abs(neighbor[0]-x)+abs(neighbor[1]-y)<=1:
+                    if abs(neighbor[0]-x)+abs(neighbor[1]-y)<=2:
                         self.foglevels[neighbor[0]][neighbor[1]]=2 #was 2
                     else:
                         self.foglevels[neighbor[0]][neighbor[1]]=2
@@ -162,51 +166,69 @@ class World():
         self.model=model
         pygame.joystick.init()
         pygame.init() 
-    def load(self, mapFileName):
-        self.backgrounds=[]
-        self.imgs=[]
-        self.sprites=[]
-        self.blood=[]
+    def load(self, mapFileName,xoff=0,yoff=0):
+
         self.camera.soundManager.reset()
         pygame.mixer.stop()
-        f = open(mapFileName, 'rb')
-        subdir='/'.join(('maps/'+mapFileName).split('/')[1:-1]) + '/'
-        lastNPC=None
-        #LoadWorld
-        for mapLine in f:
-            parsed=mapLine.strip().split(' ')
-            linetype, args = (parsed[0],parsed[1:])
-            if linetype == 'background':#img
-                x,y,wid,hig,filename, hasShadows = args
-                self.backgrounds.append(Background(subdir+filename.strip(),(int(x),int(y),int(wid),int(hig), ), None,hasShadows == 'True' ))
-            if linetype == 'sound':#sound
-                print args
-                x,y,vol,isLocalized,filename = args
-                self.camera.soundManager.addBG(int(x),int(y),float(vol),isLocalized=='True', subdir+filename.strip())
-            if linetype == 'npc':
-                x,y,width, height , maxHealth, movable, cycleTime, filename = args
-                lastNPC=Sprite(self.model,self.camera,subdir+filename.strip(),(int(x),int(y),int(width),int(height), ), int(maxHealth),movable == 'True' , int(cycleTime))
-                self.sprites.append(lastNPC)
-            if linetype =='interaction' and lastNPC:
-                command="def interactionFunc(self): " + " ".join(args)
-                exec command
-                print interactionFunc
-                lastNPC.interaction = types.MethodType( interactionFunc, lastNPC )
+        alreadyPlaying=len(self.sprites)>0
+        if alreadyPlaying:
+            areaSaves[self.mapFileName]=(self.backgrounds, self.imgs, self.sprites, self.blood)#save cur
+            if mapFileName in areaSaves:
+                self.backgrounds, self.imgs, self.sprites, self.blood = areaSaves[mapFileName]#load old
+        if not alreadyPlaying or mapFileName not in areaSaves:        
+            self.mapFileName=mapFileName
+            self.backgrounds=[]
+            self.imgs=[]
+            self.sprites=[s for s in self.sprites if s.isPlayer]
+            self.blood=[]            
+                
+            subdir='/'.join(('maps/'+mapFileName).split('/')[1:-1]) + '/'
+            lastNPC=None
+            #LoadWorld
+            with open(mapFileName, 'rb') as f:
+                for mapLine in f:
+                    parsed=mapLine.strip().split(' ')
+                    linetype, args = (parsed[0],parsed[1:])
+                    if linetype == 'background':#img
+                        x,y,wid,hig,filename, hasShadows = args
+                        self.backgrounds.append(Background(subdir+filename.strip(),(int(x),int(y),int(wid),int(hig), ), None,hasShadows == 'True' ))
+                    if linetype == 'sound':#sound
+                        print args
+                        x,y,vol,isLocalized,filename = args
+                        self.camera.soundManager.addBG(int(x),int(y),float(vol),isLocalized=='True', subdir+filename.strip())
+                    if linetype == 'npc':
+                        x,y,width, height , maxHealth, movable, cycleTime, filename = args
+                        lastNPC=Sprite(self.model,self.camera,subdir+filename.strip(),(int(x),int(y),int(width),int(height), ), int(maxHealth),movable == 'True' , int(cycleTime))
+                        self.sprites.append(lastNPC)
+                    if linetype =='interaction' and lastNPC:
+                        command="def interactionFunc(self): " + " ".join(args)
+                        exec command
+                        print interactionFunc
+                        lastNPC.interaction = types.MethodType( interactionFunc, lastNPC )
         #LoadPlayers
-        joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
-        playersFile=open(subdir+'players','rb')
-        for player in playersFile:
-            parsed=player.strip().split(' ')
-            linetype, args = (parsed[0],parsed[1:])
-            if linetype == 'npc':
-                x,y,width, height , maxHealth, movable, cycleTime, filename = args
-                newChar=Sprite(self.model,self.camera, subdir+filename.strip(),(int(x),int(y),int(width),int(height), ), int(maxHealth),movable == 'True' , int(cycleTime))
-                self.sprites.append(newChar)
-                newChar.move(0,0)#for shadows
-                if joysticks:
-                    newJoystick=joysticks.pop()
-                    newJoystick.init()
-                    self.joystickBindings[newJoystick]=newChar
+        if not alreadyPlaying:# only load if no players exist
+            joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
+            with open(subdir+'players','rb') as playersFile:
+                for player in playersFile:
+                    parsed=player.strip().split(' ')
+                    linetype, args = (parsed[0],parsed[1:])
+                    if linetype == 'npc':
+                        x,y,width, height , maxHealth, movable, cycleTime, filename = args
+                        newChar=Sprite(self.model,self.camera, subdir+filename.strip(),(int(x),int(y),int(width),int(height), ), int(maxHealth),movable == 'True' , int(cycleTime))
+                        self.sprites.append(newChar)
+                        newChar.isPlayer=True
+                        if joysticks:
+                            newJoystick=joysticks.pop()
+                            newJoystick.init()
+                            self.joystickBindings[newJoystick]=newChar
+        else:#already have players
+            if xoff or yoff:
+                for sprite in self.sprites:
+                    if sprite.isPlayer:
+                        sprite.rect=(xoff, yoff, sprite.rect[2],sprite.rect[3])
+        for player in self.sprites :
+            if player.isPlayer:
+                player.move(0,0)#for shadows
         print "Joysticks!", self.joystickBindings
             #if linetype is 't':#tile
             #    x,y,filename = args

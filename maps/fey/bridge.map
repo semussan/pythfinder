@@ -2,4 +2,4 @@ background 0 0 20 15 shot01.jpg False
 background 20 0 20 15 shot01.jpg True
 sound 10 5 .4 False romanesca_converted.ogg
 npc 5 5 1 1 19 True 120 chars/c4.png
-interaction self.loadImgs('maps/fey/chars/Renkah.png'); self.targetable=False; self.camera.soundManager.playOnce('coreSounds/test.ogg',.3); self.interaction=None; self.model.world.load('maps/fey/volcanoBig.png')
+interaction self.loadImgs('maps/fey/chars/Renkah.png');  self.camera.soundManager.playOnce('coreSounds/test.ogg',.3);  self.model.world.load('maps/fey/volcanoBig.map',2,2)
