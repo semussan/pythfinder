@@ -1,4 +1,4 @@
 background -50 -8 95 95 volcanoBig.png True
 sound 0 0 .4 False lava.ogg
-npc 5 5 1 1 19 True 120 chars/c4.png
+npc 4 4 1 1 19 True 120 chars/c4.png
 interaction self.loadImgs('maps/fey/chars/Cid.png'); self.model.world.load('maps/fey/bridge.map',2,2)

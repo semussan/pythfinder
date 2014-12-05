@@ -8,7 +8,6 @@ class Bgtrack():
         self.filename=filename
         self.volumeoffset=vol
         self.isLocalized=isLocalized
-        print filename
         self.soundobj=pygame.mixer.Sound(filename)#load music
         self.channel=self.soundobj.play(-1)
         self.soundobj.set_volume(self.volumeoffset)
@@ -20,12 +19,23 @@ class SoundManager():
     bgtracksSaves=[]
     bgtracks=[]
     def __init__(self,camera):
+        print 'Initing sound '
         self.camera=camera
         self.manager=pygame.mixer.pre_init(44100, -16, 2, 2048)
-    def reset(self):
+    def clearRunning(self):
+
         for bg in self.bgtracks:
             bg.soundobj.stop()
+        pygame.mixer.stop()
         self.bgtracks=[]
+        print 'Reseting sound, still have ', self.bgtracksSaves
+    def clearRunningAndStored(self):
+        for bg in self.bgtracks:
+            bg.soundobj.stop()
+        pygame.mixer.stop()
+        self.bgtracks=[]
+        self.bgtracksSaves=[]
+        print 'Reseting sound, still have ', self.bgtracksSaves
         
     def update(self):
         if self.bgtracksSaves and not self.bgtracks:

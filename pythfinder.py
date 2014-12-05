@@ -39,25 +39,30 @@ def writeState(filename,model,camera):
         for background in model.world.backgrounds:
                 background.img=None
                 background.FoW.fogImg=None
-                background.bloodImgs=None
+        model.world.bloodImgs=None
         camera.vert={}
         camera.horz={}
-        camera.soundManager.bgtracks=[]
+        camera.soundManager.clearRunning()
+##        print 'saving in ',camera.soundManager.bgtracksSaves
         camera.battleManager=None
-        pygame.mixer.stop()
         screensave=camera.screen
         camera.screen=None
         with open(filename+'.save','wb') as saveFile:
                 saveFile.write(dill.dumps([model,camera]))
         camera.screen=screensave
+        model.writeState=writeState
+##        print 'left',camera.soundManager.bgtracksSaves
         
 def loadState(filename):
         global transferModel, transferCamera,camera
+        camera.soundManager.clearRunningAndStored()
         screensave=camera.screen
-        pygame.mixer.stop()
         with open(filename,'rb') as saveFile:
                 transferModel, transferCamera=dill.load(saveFile)
         transferCamera.screen=screensave
+        model.loadState=loadState
+##        print 'After save load',camera.soundManager.bgtracksSaves
+        #transferCamera.screen = pygame.display.set_mode((camera.resx,camera.resy),  DOUBLEBUF)
 class Model():
         def __init__(self, camera):
                 self.world=World(self, camera)
@@ -277,6 +282,8 @@ if __name__ == '__main__':
 
         adv=Adventure( camera,'maps/fey/volcanoBig.map')
         model=adv.model
+        model.writeState=writeState
+        model.loadState=loadState
         clock = pygame.time.Clock()
         FRAMES_PER_SECOND = 40
         pygame.init()

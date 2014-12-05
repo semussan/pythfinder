@@ -19,6 +19,7 @@ class Sprite():
         files = [folder+'/'+f for f in os.listdir(folder) if os.path.isfile(folder+'/'+f) and namePart in f]
         return files
     def loadImgs(self,imgName):
+        self.imgName=imgName
         self.imgs=[]
         self.portrait=None
         for f in self.getAllFiles(imgName):
@@ -49,7 +50,8 @@ class Sprite():
         #self.onClick=onClick
         
     def damage(self, damage):
-        self.hp-=damage
+        if self.hp-damage<=self.maxHealth:
+            self.hp-=damage
         if self.hp<=0:
             self.dead=True
             self.movable=False

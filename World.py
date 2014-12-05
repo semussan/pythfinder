@@ -7,7 +7,7 @@ import random
 import types
 tileCache={}
 imgCache={}
-
+from copy import deepcopy
 areaSaves={}
 
 def getNeighbors(widthx,widthy,x,y,camera):
@@ -165,17 +165,20 @@ class World():
         self.camera=camera
         self.model=model
         pygame.joystick.init()
-        pygame.init() 
+        pygame.init()
     def load(self, mapFileName,xoff=0,yoff=0):
 
-        self.camera.soundManager.reset()
-        pygame.mixer.stop()
+        
         alreadyPlaying=len(self.sprites)>0
+        newMap='saves/'+os.path.split(mapFileName)[1]+'.save'
         if alreadyPlaying:
-            areaSaves[self.mapFileName]=(self.backgrounds, self.imgs, self.sprites, self.blood)#save cur
-            if mapFileName in areaSaves:
-                self.backgrounds, self.imgs, self.sprites, self.blood = areaSaves[mapFileName]#load old
-        if not alreadyPlaying or mapFileName not in areaSaves:        
+            oldMap='saves/'+os.path.split(self.mapFileName)[1]
+##            print oldMap,newMap
+            self.model.writeState('saves/'+os.path.split(self.mapFileName)[1],self.model,self.camera)
+            if os.path.isfile(newMap):
+##                print "Loading",newMap, "from memory"
+                self.model.loadState(newMap)
+        if not alreadyPlaying or not os.path.isfile(newMap):     
             self.mapFileName=mapFileName
             self.backgrounds=[]
             self.imgs=[]
@@ -185,7 +188,9 @@ class World():
             subdir='/'.join(('maps/'+mapFileName).split('/')[1:-1]) + '/'
             lastNPC=None
             #LoadWorld
+            self.camera.soundManager.clearRunningAndStored()
             with open(mapFileName, 'rb') as f:
+##                print "Loading",mapFileName, "for the first time"
                 for mapLine in f:
                     parsed=mapLine.strip().split(' ')
                     linetype, args = (parsed[0],parsed[1:])
@@ -193,7 +198,6 @@ class World():
                         x,y,wid,hig,filename, hasShadows = args
                         self.backgrounds.append(Background(subdir+filename.strip(),(int(x),int(y),int(wid),int(hig), ), None,hasShadows == 'True' ))
                     if linetype == 'sound':#sound
-                        print args
                         x,y,vol,isLocalized,filename = args
                         self.camera.soundManager.addBG(int(x),int(y),float(vol),isLocalized=='True', subdir+filename.strip())
                     if linetype == 'npc':
@@ -203,8 +207,8 @@ class World():
                     if linetype =='interaction' and lastNPC:
                         command="def interactionFunc(self): " + " ".join(args)
                         exec command
-                        print interactionFunc
                         lastNPC.interaction = types.MethodType( interactionFunc, lastNPC )
+##                print 'After map load',self. camera.soundManager.bgtracksSaves
         #LoadPlayers
         if not alreadyPlaying:# only load if no players exist
             joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
@@ -229,7 +233,7 @@ class World():
         for player in self.sprites :
             if player.isPlayer:
                 player.move(0,0)#for shadows
-        print "Joysticks!", self.joystickBindings
+        #print "Joysticks!", self.joystickBindings
             #if linetype is 't':#tile
             #    x,y,filename = args
             #    if filename not in tileCache:
@@ -248,7 +252,7 @@ class World():
         for background in self.backgrounds:
             background.draw(screen, camera)
         for bloodDrop in self.blood:
-            screen.blit(bloodDrop[2],camera.getRectForRect((bloodDrop[0],bloodDrop[1],1,1)))
+            self.drawBlood(bloodDrop,screen, camera)
         if camera.target:
             camera.drawHighlight(camera.target.rect,(10,10,100),128)
         if camera.battleManager and camera.battleManager.started and camera.battleManager.getCurPlayer():
@@ -257,15 +261,21 @@ class World():
             sprite.draw(screen, camera)
         for background in self.backgrounds:
             background.drawFoW(screen, camera)
+    def loadBloodImgs(self):
+        bloodDir='./coreImgs/blood/'
+        filelist = [bloodDir+f for f in os.listdir(bloodDir)]
+        self.bloodImgs=[]
+        for filename in filelist:
+            self.bloodImgs.append(pygame.image.load(filename))
+    def drawBlood(self,bloodDrop,screen, camera):
+        if not self.bloodImgs:
+            self.loadBloodImgs()
+        camera.screen.blit(self.bloodImgs[bloodDrop[2]],camera.getRectForRect((bloodDrop[0],bloodDrop[1],1,1)))
     def addBlood(self,x,y):
         if not self.bloodImgs:
-            bloodDir='./coreImgs/blood/'
-            filelist = [bloodDir+f for f in os.listdir(bloodDir)]
-            self.bloodImgs=[]
-            for filename in filelist:
-                self.bloodImgs.append(pygame.image.load(filename))
-        self.blood.append((x,y,random.choice(self.bloodImgs)))
-        print self.blood
+            self.loadBloodImgs()
+        if self.bloodImgs:
+            self.blood.append((x,y,random.randint(0,len(self.bloodImgs)-1)))
     def update(self):
           self.sprites=sorted(self.sprites, key=lambda x: x.rect[1])#sort by height
           for sprite in self.sprites:
