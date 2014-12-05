@@ -26,8 +26,8 @@ class Sprite():
                 self.portrait=pygame.image.load(f)
             else:
                 self.imgs.append(pygame.image.load(f))
-    def __init__(self,camera,imgName,rect, maxHealth,movable=True, cycleTime=100):
-
+    def __init__(self,model,camera,imgName,rect, maxHealth,movable=True, cycleTime=100):
+        self.model=model
         self.camera=camera
         self.imgName=imgName
         self.maxHealth=maxHealth
@@ -62,6 +62,7 @@ class Sprite():
                        self.rect[1] + yoff,
                        self.rect[2],
                        self.rect[3],)
+            self.model.world.reveal(self.rect[0],self.rect[1],self.camera)
             if xoff>0:
                 self.facingRight=True
             elif xoff<0:

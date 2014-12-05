@@ -48,6 +48,15 @@ class FoWMap():
                 if self.foglevels[x][y]>0:
                     self.drawSingleFoW(screen, camera, x,y,self.foglevels[x][y])
                     
+    def reveal(self, x,y,camera):
+        self.foglevels[x][y]=0
+        for neighbor in getNeighbors(self.rect[2],self.rect[3],x,y,camera):
+            if self.foglevels[neighbor[0]][neighbor[1]]>0:
+                if abs(neighbor[0]-x)+abs(neighbor[1]-y)<=1:
+                    self.foglevels[neighbor[0]][neighbor[1]]=0
+                else:
+                    self.foglevels[neighbor[0]][neighbor[1]]=1
+                        
     def click(self, x,y,clicktype,camera):
         camera.target=None
         if clicktype==1:
@@ -133,6 +142,10 @@ class Background():
         camera.target=None
         if self.FoW and camera.drawShadows:
             self.FoW.click(x,y,clicktype,camera)
+            
+    def reveal(self, x,y,camera):
+        if self.FoW and camera.drawShadows:
+            self.FoW.reveal(x,y,camera)
 
     def getBounds(self):
         return self.rect
@@ -144,8 +157,9 @@ class World():
     blood=[]
     joystickBindings={}
     bloodImgs=None
-    def __init__(self,  camera):
+    def __init__(self,  model,camera):
         self.camera=camera
+        self.model=model
         pygame.joystick.init()
         pygame.init() 
     def load(self, mapFileName):
@@ -154,6 +168,7 @@ class World():
         self.sprites=[]
         self.blood=[]
         self.camera.soundManager.reset()
+        pygame.mixer.stop()
         f = open(mapFileName, 'rb')
         subdir='/'.join(('maps/'+mapFileName).split('/')[1:-1]) + '/'
         lastNPC=None
@@ -165,11 +180,12 @@ class World():
                 x,y,wid,hig,filename, hasShadows = args
                 self.backgrounds.append(Background(subdir+filename.strip(),(int(x),int(y),int(wid),int(hig), ), None,hasShadows == 'True' ))
             if linetype == 'sound':#sound
-                x,y,vol,filename = args
-                self.camera.soundManager.addBG(int(x),int(y),float(vol),subdir+filename.strip())
+                print args
+                x,y,vol,isLocalized,filename = args
+                self.camera.soundManager.addBG(int(x),int(y),float(vol),isLocalized=='True', subdir+filename.strip())
             if linetype == 'npc':
                 x,y,width, height , maxHealth, movable, cycleTime, filename = args
-                lastNPC=Sprite(self.camera,subdir+filename.strip(),(int(x),int(y),int(width),int(height), ), int(maxHealth),movable == 'True' , int(cycleTime))
+                lastNPC=Sprite(self.model,self.camera,subdir+filename.strip(),(int(x),int(y),int(width),int(height), ), int(maxHealth),movable == 'True' , int(cycleTime))
                 self.sprites.append(lastNPC)
             if linetype =='interaction' and lastNPC:
                 command="def interactionFunc(self): " + " ".join(args)
@@ -184,8 +200,9 @@ class World():
             linetype, args = (parsed[0],parsed[1:])
             if linetype == 'npc':
                 x,y,width, height , maxHealth, movable, cycleTime, filename = args
-                newChar=Sprite(self.camera, subdir+filename.strip(),(int(x),int(y),int(width),int(height), ), int(maxHealth),movable == 'True' , int(cycleTime))
+                newChar=Sprite(self.model,self.camera, subdir+filename.strip(),(int(x),int(y),int(width),int(height), ), int(maxHealth),movable == 'True' , int(cycleTime))
                 self.sprites.append(newChar)
+                newChar.move(0,0)#for shadows
                 if joysticks:
                     newJoystick=joysticks.pop()
                     newJoystick.init()
@@ -242,6 +259,10 @@ class World():
                     if sprite.interaction:
                         sprite.interaction()
                     return
+    def reveal(self,x,y,camera,):
+        for background in self.backgrounds:
+            if camera.inBounds(background.getBounds(),x,y):
+                background.reveal(x-background.rect[0],y-background.rect[1],camera)
             
     def click(self, x,y,clicktype,camera, newClick):
         if newClick:

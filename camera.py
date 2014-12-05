@@ -46,6 +46,9 @@ class camera():
         def __init__(self, screen):
                 self.screen=screen
                 self.soundManager=SoundManager(self)
+                self.x=-self.horzTilesPerScreen/2
+                self.y=-(self.subhig/2)/self.gridSize()
+                
 
         def toggleFull(self):
                 if self.isFull:

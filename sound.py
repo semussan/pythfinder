@@ -2,11 +2,12 @@ import pygame
 import os
 
 class Bgtrack():
-    def __init__(self, x, y, vol, filename):
+    def __init__(self, x, y, vol, isLocalized,filename):
         self.x=x
         self.y=y
         self.filename=filename
         self.volumeoffset=vol
+        self.isLocalized=isLocalized
         print filename
         self.soundobj=pygame.mixer.Sound(filename)#load music
         self.channel=self.soundobj.play(-1)
@@ -25,24 +26,25 @@ class SoundManager():
         for bg in self.bgtracks:
             bg.soundobj.stop()
         self.bgtracks=[]
-        bgtracksSaves=[]
         
     def update(self):
         if self.bgtracksSaves and not self.bgtracks:
             for bgsave in self.bgtracksSaves:
                 self.bgtracks.append(Bgtrack(*bgsave))
         for bgtrack in self.bgtracks:
-            camx, camy=self.camera.getCameraCenter()
-            dist=((bgtrack.x-camx)**2 + (bgtrack.y-camy)**2)**.5
-            saturationRange=12
-            falloffPower=2.6
-            if dist<saturationRange : dist=saturationRange
-            bgtrack.setDistVolume((saturationRange**falloffPower)/(dist**falloffPower))
-                
+            if bgtrack.isLocalized:
+                camx, camy=self.camera.getCameraCenter()
+                dist=((bgtrack.x-camx)**2 + (bgtrack.y-camy)**2)**.5
+                saturationRange=12
+                falloffPower=2.6
+                if dist<saturationRange : dist=saturationRange
+                bgtrack.setDistVolume((saturationRange**falloffPower)/(dist**falloffPower))
+            else:
+                bgtrack.setDistVolume(1)
         
-    def addBG(self,x,y,vol,filename):
-        self.bgtracks.append(Bgtrack(x,y,vol,filename))
-        self.bgtracksSaves.append((x,y,vol,filename))
+    def addBG(self,x,y,vol,isLocalized,filename):
+        self.bgtracks.append(Bgtrack(x,y,vol,isLocalized,filename))
+        self.bgtracksSaves.append((x,y,vol,isLocalized,filename))
         
     def playOnce(self,filename,vol):
         sound = pygame.mixer.Sound(filename)

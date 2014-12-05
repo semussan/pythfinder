@@ -41,8 +41,9 @@ def writeState(filename,model,camera):
                 background.bloodImgs=None
         camera.vert={}
         camera.horz={}
-        camera.battleManager=None
         camera.soundManager.bgtracks=[]
+        camera.battleManager=None
+        pygame.mixer.stop()
         screensave=camera.screen
         camera.screen=None
         with open(filename+'.save','wb') as saveFile:
@@ -52,18 +53,18 @@ def writeState(filename,model,camera):
 def loadState(filename):
         global transferModel, transferCamera,camera
         screensave=camera.screen
-        
+        pygame.mixer.stop()
         with open(filename,'rb') as saveFile:
                 transferModel, transferCamera=dill.load(saveFile)
         transferCamera.screen=screensave
 class Model():
         def __init__(self, camera):
-                self.world=World( camera)
+                self.world=World(self, camera)
 class Adventure():
         model=None
         def __init__(self, camera,mapFile,):
-                self.model=Model( camera)
-                self.model.world.load('maps/fey/bridge.map')
+                self.model=Model(camera)
+                self.model.world.load(mapFile)
         
 def isCtrl():
         return bool(pygame.key.get_mods()& KMOD_LCTRL)
@@ -119,7 +120,6 @@ def handle_user_input(model,camera,console):
                 if newJoyHatPress(joystick.get_id()):
                         moveX,moveY=joystick.get_hat(0)
                         player.move(moveX,-moveY)
-                        model.world.click(player.rect[0],player.rect[1],1,camera, False)
                         if player.maxHealth/2>player.hp:
                                 model.world.addBlood(player.rect[0],player.rect[1])
 
@@ -202,7 +202,7 @@ def handle_user_input(model,camera,console):
 
 
 
-        if newPress(K_i):
+        if newPress(K_e):
                 model.world.interact(camera.target)
                 
 
@@ -276,7 +276,7 @@ if __name__ == '__main__':
         console=pyconsole.Console(screen,(0,0,camera.resx,camera.resy/6))
         console.active=False
 
-        adv=Adventure( camera,'maps/fey/bridge.map')
+        adv=Adventure( camera,'maps/fey/volcanoBig.map')
         model=adv.model
         clock = pygame.time.Clock()
         FRAMES_PER_SECOND = 40
@@ -289,7 +289,7 @@ if __name__ == '__main__':
                 x,y=0,0
                 if camera.target:
                         x,y=camera.target.rect[0],camera.target.rect[1]
-                model.world.sprites.append(Sprite(camera,imgFile,(x,y,width,height ), True ,))
+                model.world.sprites.append(Sprite(model,camera,imgFile,(x,y,width,height ), True ,))
         while running:
                 #try:
                         if transferModel and transferCamera:
