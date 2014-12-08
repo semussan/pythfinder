@@ -6,6 +6,8 @@ import os
 import pdb
 
 
+pygame.font.init()
+font = pygame.font.Font(None, 10)
 class Sprite():
     picture=None
     interaction=None
@@ -18,6 +20,11 @@ class Sprite():
         namePart=filePart.split('.')[0]
         files = [folder+'/'+f for f in os.listdir(folder) if os.path.isfile(folder+'/'+f) and namePart in f]
         return files
+    def clearImgs(self):
+        self.imgName=''
+        self.imgs=[]
+    def show(self):
+        self.camera.addDialog(self,'right')
     def loadImgs(self,imgName):
         self.imgName=imgName
         self.imgs=[]
@@ -27,7 +34,7 @@ class Sprite():
                 self.portrait=pygame.image.load(f)
             else:
                 self.imgs.append(pygame.image.load(f))
-    def __init__(self,model,camera,imgName,rect, maxHealth,movable=True, cycleTime=100):
+    def __init__(self,model,camera,imgName,rect, maxHealth=50,movable=True, cycleTime=100):
         self.model=model
         self.camera=camera
         self.isPlayer=False
@@ -73,7 +80,13 @@ class Sprite():
             elif xoff<0:
                 self.facingRight=False
             self.lastMove=(xoff,yoff)
-
+    def drawHP(self, screen, camera):
+        if self.isPlayer and self.hp<self.maxHealth:
+            text = font.render(str(self.hp)+"/"+str(self.maxHealth) , 1, (255, 255, 255))
+            center=camera.getXYForXY(self.rect[0]+self.rect[2]/2,self.rect[1]+self.rect[3])
+            textpos = text.get_rect(centerx=center[0],centery=center[1])
+            screen.blit(text, textpos)
+            
     def draw(self, screen, camera):
         #if not self.picture:
         #    self.picture= pygame.transform.scale(self.img, (self.rect[2]*camera.gridSize(),
@@ -107,6 +120,7 @@ class Sprite():
                     newrect = self.deadImg.get_rect()
                     newrect = newrect.move(self.rect[0],self.rect[1])
                     screen.blit(self.deadImg,camera.getRectForRect(newrect))
+        self.drawHP(screen,camera)
             
                
     def update(self):

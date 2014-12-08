@@ -167,17 +167,16 @@ class World():
         pygame.joystick.init()
         pygame.init()
     def load(self, mapFileName,xoff=0,yoff=0):
-
-        
         alreadyPlaying=len(self.sprites)>0
         newMap='saves/'+os.path.split(mapFileName)[1]+'.save'
-        if alreadyPlaying:
+        if alreadyPlaying and 'forestDense' not in self.mapFileName:
             oldMap='saves/'+os.path.split(self.mapFileName)[1]
 ##            print oldMap,newMap
             self.model.writeState('saves/'+os.path.split(self.mapFileName)[1],self.model,self.camera)
             if os.path.isfile(newMap):
 ##                print "Loading",newMap, "from memory"
                 self.model.loadState(newMap)
+                
         if not alreadyPlaying or not os.path.isfile(newMap):     
             self.mapFileName=mapFileName
             self.backgrounds=[]
@@ -185,13 +184,14 @@ class World():
             self.sprites=[s for s in self.sprites if s.isPlayer]
             self.blood=[]            
                 
-            subdir='/'.join(('maps/'+mapFileName).split('/')[1:-1]) + '/'
+            self.subdir=subdir='/'.join(('maps/'+mapFileName).split('/')[1:-1]) + '/'
             lastNPC=None
-            #LoadWorld
+            #LoadWorld 
             self.camera.soundManager.clearRunningAndStored()
             with open(mapFileName, 'rb') as f:
 ##                print "Loading",mapFileName, "for the first time"
                 for mapLine in f:
+                    print mapLine
                     parsed=mapLine.strip().split(' ')
                     linetype, args = (parsed[0],parsed[1:])
                     if linetype == 'background':#img
@@ -211,28 +211,16 @@ class World():
 ##                print 'After map load',self. camera.soundManager.bgtracksSaves
         #LoadPlayers
         if not alreadyPlaying:# only load if no players exist
-            joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
-            with open(subdir+'players','rb') as playersFile:
-                for player in playersFile:
-                    parsed=player.strip().split(' ')
-                    linetype, args = (parsed[0],parsed[1:])
-                    if linetype == 'npc':
-                        x,y,width, height , maxHealth, movable, cycleTime, filename = args
-                        newChar=Sprite(self.model,self.camera, subdir+filename.strip(),(int(x),int(y),int(width),int(height), ), int(maxHealth),movable == 'True' , int(cycleTime))
-                        self.sprites.append(newChar)
-                        newChar.isPlayer=True
-                        if joysticks:
-                            newJoystick=joysticks.pop()
-                            newJoystick.init()
-                            self.joystickBindings[newJoystick]=newChar
-        else:#already have players
-            if xoff or yoff:
-                for sprite in self.sprites:
-                    if sprite.isPlayer:
-                        sprite.rect=(xoff, yoff, sprite.rect[2],sprite.rect[3])
+            self.repair()
+
+        for sprite in self.sprites:
+            if sprite.isPlayer:
+                sprite.rect=(xoff, yoff, sprite.rect[2],sprite.rect[3])
         for player in self.sprites :
             if player.isPlayer:
                 player.move(0,0)#for shadows
+        aPlayer=[x for x in self.sprites if not x.isPlayer][0]
+        self.camera.recenter(xoff,yoff)
         #print "Joysticks!", self.joystickBindings
             #if linetype is 't':#tile
             #    x,y,filename = args
@@ -240,7 +228,32 @@ class World():
             #        tileCache[filename]=pygame.image.load(subdir+filename)
             #    self.tiles.append((int(x),int(y),tileCache[filename]))
             #print x, y
-            
+        #if os.path.isfile(newMap):
+        self.repair()
+    def repair(self):
+        #if self.joystickBindings:
+        #    [x.quit() for x in self.joystickBindings]
+        if not self.joystickBindings:
+            self.sprites=[x for x in self.sprites if not x.isPlayer]
+            joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
+            with open(self.subdir+'players','rb') as playersFile:
+                for player in playersFile:
+                    parsed=player.strip().split(' ')
+                    linetype, args = (parsed[0],parsed[1:])
+                    if linetype == 'npc':
+                        x,y,width, height , maxHealth, movable, cycleTime, filename = args
+                        newChar=Sprite(self.model,self.camera, self.subdir+filename.strip(),(int(x),int(y),int(width),int(height), ), int(maxHealth),movable == 'True' , int(cycleTime))
+                        self.sprites.append(newChar)
+                        newChar.isPlayer=True
+                        if joysticks:
+                            newJoystick=joysticks.pop()
+                            newJoystick.init()
+                            self.joystickBindings[newJoystick]=newChar
+        else:
+            players=[x for x in self.sprites if x.isPlayer]
+            for num,oldJoystick in enumerate(self.joystickBindings):
+                playerName=self.joystickBindings[oldJoystick].imgName
+                self.joystickBindings[oldJoystick]= [x for x in players if x.imgName == playerName][-1]
     def drawHighlight(self, screen, camera, rect):
         rect=camera.getRectForRect(rect)
         trans=pygame.Surface((rect[2],rect[3],))
@@ -290,6 +303,8 @@ class World():
                 if self.camera.inBounds(sprite.rect, x,y):
                     if sprite.interaction:
                         sprite.interaction()
+                    elif sprite.portrait:
+                        sprite.show()
                     return
     def reveal(self,x,y,camera,):
         for background in self.backgrounds:

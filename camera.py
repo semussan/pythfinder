@@ -42,12 +42,13 @@ class camera():
                 return True
             else:
                 return False
-
+        def recenter(self,x,y):
+            self.x=x-self.horzTilesPerScreen/2
+            self.y=y-(self.subhig/2)/self.gridSize()
         def __init__(self, screen):
                 self.screen=screen
                 self.soundManager=SoundManager(self)
-                self.x=-self.horzTilesPerScreen/2
-                self.y=-(self.subhig/2)/self.gridSize()
+                self.recenter(0,0)
                 
 
         def toggleFull(self):
@@ -179,12 +180,25 @@ class camera():
                 borderOffsets=(40,120)
                 for player in leftDialogs:
                     if player.portrait:
-                        #ar=float(player.rect[2])/player.rect[3]
                         newRect=player.portrait.get_rect()
                         newRect=newRect.move(self.subx+runningOffset+borderOffsets[0],
                                              self.suby+self.subhig-newRect[3]-borderOffsets[1])
                         self.screen.blit(player.portrait, newRect)
                         runningOffset+=space+newRect[2]
+                    
+                space=10
+                runningOffset=0
+                for player in rightDialogs:
+                    if player.portrait:
+                        newRect=player.portrait.get_rect()
+                        print self.subx+self.subwid
+                        newRect=newRect.move(self.subx+self.subwid-runningOffset-borderOffsets[0]-newRect[2],
+                                             self.suby+self.subhig-newRect[3]-borderOffsets[1])
+                        print newRect
+                        self.screen.blit(player.portrait, newRect)
+                        runningOffset+=space+newRect[2]
+
+            
                         
                     
                     

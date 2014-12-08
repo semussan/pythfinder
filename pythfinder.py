@@ -10,7 +10,8 @@ from pygame.locals import *
 from collections import defaultdict
 import pyconsole
 from BattleManager import BattleManager
-import os
+import os,sys
+
 import glob
 
 
@@ -102,6 +103,7 @@ def handle_user_input(model,camera,console):
                     print 'Quitting'
                     running = False  # Be interpreter friendly           
                     pygame.quit()
+                    sys.exit()
                 #record key status
                 if hasattr(event, 'key'):
 
@@ -173,7 +175,9 @@ def handle_user_input(model,camera,console):
                 
         if newPress(K_RETURN):
                 camera.toggleFull()
-                        
+                
+        if newPress(K_BACKSPACE):
+                model.world.repair()                     
 
         if newPress(K_PAGEUP):
                 camera.drawGrid=False
@@ -206,8 +210,14 @@ def handle_user_input(model,camera,console):
 
 
 
-        if newPress(K_e):
-                model.world.interact(camera.target)
+        if newPress(K_e) and camera.target:
+                if camera.target.interaction:
+                        camera.target.interaction()
+                elif camera.target.portrait:
+                        camera.target.show()
+        if newPress(K_i) and camera.target:
+                if camera.target.portrait:
+                        camera.target.show()
                 
 
         if newPress(K_MINUS) and camera.target:
@@ -239,7 +249,7 @@ def handle_user_input(model,camera,console):
                 if not camera.battleManager:
                         camera.battleManager=BattleManager(camera)
                 if camera.target and not camera.battleManager.has(camera.target):
-                        if not isinstance(camera.target,Sprite) and not camera.battleManager.started:
+                        if camera.target.isPlayer and not camera.battleManager.started:
                                 init=int(camera.quickInt("Enter initiative"))
                                 camera.battleManager.addPlayer(camera.target,init)
                         else:
@@ -269,7 +279,11 @@ def handle_user_input(model,camera,console):
         joyHatStatusLast=copy.deepcopy(joyHatStatus)
         joyStatusLastLast=copy.deepcopy(joyStatusLast)
         joyHatStatusLastLast=copy.deepcopy(joyHatStatusLast)
-
+        
+def getAllFiles(self, fileName):
+        folder, filePart=os.path.split(fileName)
+        namePart=filePart.split('.')[0]
+        files = [folder+'/'+f for f in os.listdir(folder) if os.path.isfile(folder+'/'+f) and namePart in f]
 
 transferModel=None
 transferCamera=None
@@ -279,8 +293,7 @@ if __name__ == '__main__':
         camera=camera(screen)        
         console=pyconsole.Console(screen,(0,0,camera.resx,camera.resy/6))
         console.active=False
-
-        adv=Adventure( camera,'maps/fey/volcanoBig.map')
+        adv=Adventure( camera,'maps/fey/hub.map')
         model=adv.model
         model.writeState=writeState
         model.loadState=loadState
@@ -297,7 +310,7 @@ if __name__ == '__main__':
                         x,y=camera.target.rect[0],camera.target.rect[1]
                 model.world.sprites.append(Sprite(model,camera,imgFile,(x,y,width,height ), True ,))
         while running:
-                #try:
+                try:
                         if transferModel and transferCamera:
                                 model=transferModel
                                 camera=transferCamera
@@ -308,11 +321,12 @@ if __name__ == '__main__':
                         camera.update()
                         pygame.display.update()
                         deltat = clock.tick(FRAMES_PER_SECOND)
+                        model.world.repair()
                         #loadState(camera.quickFile())
                         #writeState(camera.quickSaveFile())
-                #except Exception, e:
-                #        running = False
-                #        print e
+                except Exception, e:
+                        #running = False
+                        print e
                         
                 
         

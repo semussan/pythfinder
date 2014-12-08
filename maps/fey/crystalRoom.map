@@ -1,0 +1,10 @@
+background -1 -5 18 12 crystalRoom12x18.png True
+sound 19 -7 1 False hum.ogg
+npc 3 -3 1 1 64 True 80 warden.png
+npc 3 -4 1 1 64 True 80 chains.png
+npc 3 -3 1 1 64 True 80 chains.png
+npc 3 -2 8 6 6 False 9 crystalOnly.png
+npc -1 0 1 2 1 False 9 none.png
+interaction self.model.world.load('maps/fey/hub.map')
+npc -1 4 1 2 1 False 9 none.png
+interaction self.model.world.sprites.append(Sprite(self.model,self.camera,'maps/fey/neko.png',(0,1,1,1 ), 94,True,60)) ;  self.model.world.sprites.append(Sprite(self.model,self.camera,'maps/fey/warden.png',(1,0,2,2 ), 79,True,40)) ; self.interaction=None
