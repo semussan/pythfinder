@@ -1,0 +1,20 @@
+background -3 -12 44 24 mainhub.png True
+sound 19 -7 .8 True portal.ogg
+npc 19 -7 2 2 1 False 20 portalblue.png
+interaction self.model.world.load('maps/fey/forestDense.map')
+npc 23 -7 2 2 1 False 9 portalred.png
+interaction self.model.world.load('maps/fey/volcanoBig.map')
+npc 21 11 3 1 1 False 9 doorwidebottomclosed.png
+interaction self.model.world.load('maps/fey/yagura.map')
+npc 40 -1 1 3 1 False 9 none.png
+interaction self.model.world.load('maps/fey/crystalRoom.map')
+npc 22 8 1 1 80 True 80 guard.png
+npc 23 6 1 1 60 True 60 dapperdile.png
+npc 22 5 1 1 80 True 80 guard.png
+npc 22 -4 1 1 64 True 80 kobold.png
+npc 23 -5 1 1 64 True 80 kobold.png
+npc 39 4 1 1 19 True 120 pearl.png
+interaction self.clearImgs(); self.show();  self.targetable=False; self.interaction=None
+npc 11 -7 2 1 19 True 60 corpse.png
+npc 13 -7 1 1 19 True 60 beggar.png
+npc 13 5 1 1 19 True 60 beggar.png

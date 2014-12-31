@@ -1,0 +1,8 @@
+# Ignore everything in this directory
+*.pdn
+*.wav
+*.mp3
+*.jpg
+*.jpeg
+# Except this file
+!.gitignore

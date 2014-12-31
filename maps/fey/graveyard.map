@@ -1,0 +1,28 @@
+background -1 -14 31 24 graveyard.png True
+sound 19 -7 .5 False forest.ogg
+npc 9 -7 1 1 1 False 9 gravestone.png
+interaction self.model.world.sprites.append(Sprite(self.model,self.camera,'maps/fey/ghost.png',(9,-7,1,1 ), 50,True,15)) ; self.interaction=None
+npc 12 -7 1 1 1 False 9 gravestone.png
+interaction self.model.world.sprites.append(Sprite(self.model,self.camera,'maps/fey/ghost.png',(12,-7,1,1 ), 50,True,15)) ; self.interaction=None
+npc 15 -7 1 1 1 False 9 gravestone.png
+interaction self.model.world.sprites.append(Sprite(self.model,self.camera,'maps/fey/ghost.png',(15,-7,1,1 ), 50,True,15)) ; self.interaction=None
+npc 18 -7 1 1 1 False 9 gravestone.png
+interaction self.model.world.sprites.append(Sprite(self.model,self.camera,'maps/fey/ghost.png',(18,-7,1,1 ), 50,True,15)) ; self.interaction=None
+npc 9 -5 1 1 1 False 9 gravestone.png
+interaction self.model.world.sprites.append(Sprite(self.model,self.camera,'maps/fey/ghost.png',(9,-5,1,1 ), 50,True,15)) ; self.interaction=None
+npc 12 -5 1 1 1 False 9 gravestone.png
+interaction self.model.world.sprites.append(Sprite(self.model,self.camera,'maps/fey/ghost.png',(12,-5,1,1 ), 50,True,15)) ; self.interaction=None
+npc 15 -5 1 1 1 False 9 gravestone.png
+interaction self.loadImgs('maps/fey/zeldaSword.png'); self.camera.soundManager.playOnce('maps/fey/secret.ogg', .7);
+npc 18 -5 1 1 1 False 9 gravestone.png
+interaction self.model.world.sprites.append(Sprite(self.model,self.camera,'maps/fey/ghost.png',(18,-5,1,1 ), 50,True,15)) ; self.interaction=None
+npc 9 -3 1 1 1 False 9 gravestone.png
+interaction self.model.world.sprites.append(Sprite(self.model,self.camera,'maps/fey/ghost.png',(9,-3,1,1 ), 50,True,15)) ; self.interaction=None
+npc 12 -3 1 1 1 False 9 gravestone.png
+interaction self.model.world.sprites.append(Sprite(self.model,self.camera,'maps/fey/ghost.png',(12,-3,1,1 ), 50,True,15)) ; self.interaction=None
+npc 15 -3 1 1 1 False 9 gravestone.png
+interaction self.model.world.sprites.append(Sprite(self.model,self.camera,'maps/fey/ghost.png',(15,-3,1,1 ), 50,True,15)) ; self.interaction=None
+npc 18 -3 1 1 1 False 9 gravestone.png
+interaction self.model.world.sprites.append(Sprite(self.model,self.camera,'maps/fey/ghost.png',(18,-3,1,1 ), 50,True,15)) ; self.interaction=None
+npc -1 -1 4 4 3 False 9 none.png
+interaction self.model.world.load('maps/fey/forestTown.map')

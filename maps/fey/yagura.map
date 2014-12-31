@@ -1,0 +1,72 @@
+background -3 0 8 8 gRoom.png True
+npc -1 7 1 1 80 True 80 guard.png
+npc 2 7 1 1 80 True 80 guard.png
+npc -4 18 1 1 20 True 40 commoner.png
+npc -2 22 1 1 80 True 80 guard.png
+npc -4 23 1 1 43 True 40 sorc.png
+npc -7 46 1 1 64 True 80 kobold.png
+npc 2 49 1 1 64 True 80 kobold.png
+npc -2 40 1 1 80 True 80 guard.png
+npc -24 34 1 1 20 True 40 commoner.png
+npc -29 39 1 1 43 True 40 sorc.png
+npc -34 45 1 1 20 True 40 commoner.png
+npc -6 62 1 1 20 True 20 dummy.png
+interaction self.loadImgs('maps/fey/mimic.png');
+npc -1 62 1 1 55 True 20 dummy.png
+interaction self.loadImgs('maps/fey/mimic.png');
+npc -4 69 1 1 20 True 69 whiteSamarai.png
+npc 21 46 1 1 20 True 40 beggar.png
+npc 23 46 1 1 20 True 40 beggar.png
+npc 23 41 1 1 20 True 40 beggar.png
+npc 21 41 1 1 20 True 40 beggar.png
+npc 28 44 1 1 20 True 40 commoner.png
+npc 27 49 1 1 20 True 40 beggar.png
+npc 27 34 1 1 20 True 40 commoner.png
+npc 24 43 1 1 80 True 80 guard.png
+npc 27 36 1 1 43 True 40 sorc.png
+npc 28 39 2 1 43 True 40 chestDown.png
+interaction self.clearImgs(); self.show();self.camera.soundManager.playOnce('maps/fey/getItem.ogg', .7);  self.targetable=False; self.interaction=None
+npc 26 36 1 1 43 True 40 scroll.png
+interaction self.clearImgs(); self.show();self.camera.soundManager.playOnce('maps/fey/getItem.ogg', .7); self.targetable=False; self.interaction=None
+npc -31 39 2 2 43 True 40 crystalBall.png
+npc 0 -1 2 2 3 False 9 none.png
+interaction self.model.world.load('maps/fey/hub.map')
+background 0 8 2 8 stone10vert.png True
+npc 0 9 2 6 19 False 120 unpit2x6.png
+interaction self.loadImgs('maps/fey/openpit2x6.png');  self.interaction=None
+npc 0 7 2 1 19 False 120 doorbottomclosed.png
+interaction self.loadImgs('maps/fey/doorbottomopen.png');  self.interaction=None
+background 0 16 2 10 stone10vert.png True
+background -5 16 5 5 room1.png True
+npc 0 19 1 2 19 False 120 doorleftclosed.png
+interaction self.loadImgs('maps/fey/doorleftopen.png');  self.interaction=None
+background -5 21 5 5 room2.png True
+npc 0 23 1 2 19 False 120 doorleftclosed.png
+interaction self.loadImgs('maps/fey/doorleftopen.png');  self.interaction=None
+background 0 26 2 10 stone10vert.png True
+background -5 28 5 5 room3.png True
+npc 0 29 1 2 19 False 120 doorleftclosed.png
+interaction self.loadImgs('maps/fey/doorleftopen.png');  self.interaction=None
+background -11 36 16 16 arena.png True
+npc 0 35 2 1 19 False 120 doorbottomclosed.png
+interaction self.loadImgs('maps/fey/doorbottomopen.png');  self.interaction=None
+npc -4 51 2 1 19 False 120 doorbottomclosed.png
+interaction self.loadImgs('maps/fey/doorbottomopen.png');  self.interaction=None
+npc -11 39 1 2 19 False 120 doorleftclosed.png
+interaction self.loadImgs('maps/fey/doorleftopen.png');  self.interaction=None
+npc 4 39 1 2 19 False 120 doorrightclosed.png
+interaction self.loadImgs('maps/fey/doorrightopen.png');  self.interaction=None
+npc 4 47 1 2 19 False 120 doorrightclosed.png
+background -19 39 8 2 green8horz.png True
+background -35 31 16 17 library.png True
+background -4 52 2 8 green8vert.png True
+background -10 60 14 10 benkyou.png True
+sound -3 70 .3 True romanesca_converted.ogg
+npc -2 68 1 1 19 True 120 head.png
+interaction self.clearImgs(); self.show();  self.camera.soundManager.playOnce('maps/fey/getItem.ogg', .7); self.targetable=False; self.interaction=None
+npc -4 67 1 1 19 True 120 scroll.png
+interaction self.clearImgs(); self.show(); self.camera.soundManager.playOnce('maps/fey/getItem.ogg', .7); self.targetable=False; self.interaction=None
+background 5 39 10 2 stone10horz.png True
+npc 14 39 1 2 19 False 120 doorrightclosed.png
+interaction self.loadImgs('maps/fey/doorrightopen.png');  self.interaction=None
+background 15 32 15 19 prison15x19.png True

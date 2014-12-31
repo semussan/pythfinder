@@ -1,0 +1,20 @@
+background -70 -53 95 95 volcanoBig.png True
+sound 0 0 .4 False lava.ogg
+sound 7 -14 .7 True portal.ogg
+npc 4 0 2 2 1 False 9 portalred.png
+interaction self.model.world.load('maps/fey/hub.map', 24,-7)
+npc 0 -13 1 1 64 True 64 kobold.png
+npc 0 -11 1 1 43 True 43 hellcat.png
+npc -4 27 1 2 43 True 40 chestLeft.png
+interaction self.clearImgs(); self.show();  self.targetable=False; self.interaction=None
+npc -7 24 1 1 43 True 43 hellcat.png
+npc -11 30 1 1 50 True 50 kobold.png
+npc -14 29 1 1 50 True 50 kobold.png
+npc -37 34 1 1 19 True 120 pearl.png
+interaction self.clearImgs(); self.show();  self.targetable=False; self.interaction=None
+npc -44 10 1 1 43 True 43 hellcat.png
+npc -45 9 1 1 43 True 43 hellcat.png
+npc -63 -9 1 1 43 True 43 ignus.png
+interaction import random ; [ self.model.world.sprites.append(Sprite(self.model,self.camera,'maps/fey/zombie.png',(-63+random.randint(-4,4),-9+random.randint(-4,4),1,1 ), 32,True,56))  for x in range(12)] ; self.interaction=None
+npc -65 -8 2 3 55 True 20 postBody.png
+interaction self.loadImgs('maps/fey/postNobody.png');
