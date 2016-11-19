@@ -67,7 +67,7 @@ def handle_user_input(model, camera, cached, console):
             for i in range(numButtons):
                 if  joystick.get_button(i):
                     found=True
-            if joystick.get_hat(0)[0] or 54.get_hat(0)[1]:
+            if joystick.get_hat(0)[0] or joystick.get_hat(0)[1]:
                     found=True
             if found:
                 cached._playerToJoystick[camera.lookingForJoystickTarget.imgName]=joystick

@@ -1,7 +1,0 @@
-Rumble:
-X movement
-PC's:
-XTurn Orders:
-P General map def constructors (postponed due to need for special cases/add to lists)
-animations
-Death/death icon
