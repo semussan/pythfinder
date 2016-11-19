@@ -25,12 +25,12 @@ npc 27 34 1 1 20 True 40 commoner.png
 npc 24 43 1 1 80 True 80 guard.png
 npc 27 36 1 1 43 True 40 sorc.png
 npc 28 39 2 1 43 True 40 chestDown.png
-interaction self.clearImgs(); self.show();self.camera.soundManager.playOnce('maps/fey/getItem.ogg', .7);  self.targetable=False; self.interaction=None
+interaction self.clearImgs(); self.show();camera.soundManager.playOnce('maps/fey/getItem.ogg', .7);  self.targetable=False; self.interaction=None
 npc 26 36 1 1 43 True 40 scroll.png
-interaction self.clearImgs(); self.show();self.camera.soundManager.playOnce('maps/fey/getItem.ogg', .7); self.targetable=False; self.interaction=None
+interaction self.clearImgs(); self.show();camera.soundManager.playOnce('maps/fey/getItem.ogg', .7); self.targetable=False; self.interaction=None
 npc -31 39 2 2 43 True 40 crystalBall.png
 npc 0 -1 2 2 3 False 9 none.png
-interaction self.model.world.load('maps/fey/hub.map')
+interaction model.world.setArea('maps/fey/hub.map',camera,model,cached)
 background 0 8 2 8 stone10vert.png True
 npc 0 9 2 6 19 False 120 unpit2x6.png
 interaction self.loadImgs('maps/fey/openpit2x6.png');  self.interaction=None
@@ -63,9 +63,9 @@ background -4 52 2 8 green8vert.png True
 background -10 60 14 10 benkyou.png True
 sound -3 70 .3 True romanesca_converted.ogg
 npc -2 68 1 1 19 True 120 head.png
-interaction self.clearImgs(); self.show();  self.camera.soundManager.playOnce('maps/fey/getItem.ogg', .7); self.targetable=False; self.interaction=None
+interaction self.clearImgs(); self.show();  camera.soundManager.playOnce('maps/fey/getItem.ogg', .7); self.targetable=False; self.interaction=None
 npc -4 67 1 1 19 True 120 scroll.png
-interaction self.clearImgs(); self.show(); self.camera.soundManager.playOnce('maps/fey/getItem.ogg', .7); self.targetable=False; self.interaction=None
+interaction self.clearImgs(); self.show(); camera.soundManager.playOnce('maps/fey/getItem.ogg', .7); self.targetable=False; self.interaction=None
 background 5 39 10 2 stone10horz.png True
 npc 14 39 1 2 19 False 120 doorrightclosed.png
 interaction self.loadImgs('maps/fey/doorrightopen.png');  self.interaction=None

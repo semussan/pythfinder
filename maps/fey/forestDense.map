@@ -1,12 +1,12 @@
 background -1 -11 34 30 forestDense.png True
 sound 19 -7 .5 False forest.ogg
 npc -1 -11 1 30 3 False 9 none.png
-interaction self.model.world.load('maps/fey/forestDense.map', 32,-4)
+interaction model.world.setArea('maps/fey/forestDense.map', 32,-4 , camera, model, cached)
 npc 32 -11 1 30 3 False 9 none.png
-interaction self.model.world.load('maps/fey/forestDense.map', 0,0)
+interaction model.world.setArea('maps/fey/forestDense.map', 0,0 , camera, model, cached)
 npc -1 -11 30 1 3 False 9 none.png
-interaction self.model.world.load('maps/fey/forestDense.map', 14,17)
+interaction model.world.setArea('maps/fey/forestDense.map', 14,17 , camera, model, cached)
 npc -1 18 30 1 3 False 9 none.png
-interaction self.model.world.load('maps/fey/forestDense.map', 13,-10)
+interaction model.world.setArea('maps/fey/forestDense.map', 13,-10 , camera, model, cached)
 npc 3 10 2 2 3 False 9 none.png
-interaction self.model.world.load('maps/fey/forestTown.map', 0,0)
+interaction model.world.setArea('maps/fey/forestTown.map', 0,0, camera, model, cached)
