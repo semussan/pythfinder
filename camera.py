@@ -245,7 +245,7 @@ class camera():
                 runningOffset += space + newRect[2]
 
         if self.doStreaming:
-            outFileName=r"c:/Users/tyoung/Desktop/screenshots/" + str(datetime.datetime.now().microsecond/10000)
+            outFileName=r"screenshots/" + str(datetime.datetime.now().microsecond/10000)
             try:
                 pygame.image.save(screenshot, outFileName+'.jpg')
             except:
