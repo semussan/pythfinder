@@ -32,29 +32,31 @@ class FoWMap():
         self.foglevels = [[2 for x in range(self.rect[3])] for x in range(self.rect[2])]
 
     def fogUnattended(self,model,parentBackground):
+        seen = False
         for x in range(self.rect[2]):
             for y in range(self.rect[3]):
-                if self.foglevels[x][y] is 0:
+                if not seen and self.foglevels[x][y] is 0:
                     seen=False
                     for player in model.world.players:
                         adjustedx,adjustedy= x+parentBackground.rect[0],y+parentBackground.rect[1]
                         if ((player.rect[0] - adjustedx) ** 2 + (player.rect[1] - adjustedy) ** 2) ** .5 < lightDist:
-                            seen=True;
+                            seen=True
                             break
                     if not seen:
                         self.foglevels[x][y]=1
-    def drawSingleFoW(self, screen, camera, x, y, level,cached,prerect):
-        screen.blit(cached.fogImgs(camera)[level], (prerect[0]+ camera.gridSize*x, prerect[1]+ camera.gridSize*y))
+    def drawSingleFoW(self, screen, camera, x, y, level,cached,prerect, fog_imgs):
+        screen.blit(fog_imgs[level], (prerect[0]+ camera.tileSize*x, prerect[1]+ camera.tileSize*y))
         # pygame.draw.rect(screen,(level*30,0,0),rect,0)
 
     def draw(self, screen, camera,cached):
         prerect = camera.getRectForXY(self.rect[0], self.rect[1])
-        clippedx=camera.clippedXRange(self.rect[0],self.rect[0]+self.rect[2],self.rect[0])
-        clippedy=camera.clippedYRange(self.rect[1],self.rect[1]+self.rect[3],self.rect[1])
+        clippedx = camera.clippedXRange(self.rect[0],self.rect[0]+self.rect[2],self.rect[0])
+        clippedy = camera.clippedYRange(self.rect[1],self.rect[1]+self.rect[3],self.rect[1])
+        fog_imgs = cached.fogImgs(camera)
         for x in clippedx:
             for y in clippedy:
                 if self.foglevels[x][y] > 0:
-                    self.drawSingleFoW(screen, camera, x, y, self.foglevels[x][y],cached,prerect)
+                    self.drawSingleFoW(screen, camera, x, y, self.foglevels[x][y],cached,prerect, fog_imgs)
 
     def revealOld(self, x, y, camera):
         self.foglevels[x][y] = 0

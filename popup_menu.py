@@ -543,7 +543,7 @@ class Menu(object):
 
 if __name__ == '__main__':
     # Test non-blocking.
-    screen = pygame.display.set_mode((600,600))
+    screen = pygame.display.set_mode((600,600), RESIZABLE)
     clock = pygame.time.Clock()
     menu_data = (
         'Main',

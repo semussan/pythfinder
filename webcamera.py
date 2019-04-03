@@ -13,7 +13,7 @@ class WebCamera(object):
     def get_frame(self):
 
         try:
-            fileName=sorted(glob.iglob(directory+'\*.jpg'), key=os.path.getmtime)[-2]
+            fileName=sorted(glob.iglob(directory+'\*.BMP'), key=os.path.getmtime)[-2]
             self.lastImg = open(fileName, 'rb').read()
         except:
             pass

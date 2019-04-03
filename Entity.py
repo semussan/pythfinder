@@ -14,6 +14,7 @@ class Entity(Editable):
     joystick = None
     wiggleLeft=False
     wiggles=True
+    portrait=None
 
     def __init__(self, imgName, rect, maxHealth=50, movable=True, cycleTime=100):
         self.isPlayer = False
@@ -70,63 +71,55 @@ class Entity(Editable):
             textpos = text.get_rect(centerx=center[0], centery=center[1])
             screen.blit(text, textpos)
 
-    def draw(self, screen, camera,cached,model):
+    def draw(self, screen, camera, cached, model, dm_view = False):
         if self.wiggles and random.random()<.01:
             self.wiggleLeft= not self.wiggleLeft
-        if not model.world.currentArea.isShrouded(self.rect,camera):
-            self.forcedraw(screen, camera,cached,model)
 
-    def forcedraw(self, screen, camera,cached,model):
-        imgs = cached.getImgs(self.imgName)
-        portrait = cached.portrait(self.imgName)
-        if imgs:
+        if dm_view or not model.world.currentArea.isShrouded(self.rect,camera):
+            num_imgs = cached.getNumImgs(self.imgName, flipped = not self.facingRight)
+            portrait = cached.portrait(self.imgName)
             if not self.dead:
-                curImg = imgs[(self.timer / self.switchTime) % len(imgs)]
-                drawimg = curImg
-                if not self.facingRight:
-                    drawimg = pygame.transform.flip(curImg, True, False)
-                newrect = curImg.get_rect()
+                img_idx = (self.timer / self.switchTime) % num_imgs  
+                newrect = cached.getImgRect(self.imgName, img_idx, flipped = not self.facingRight)    
+                rotation = 0
                 if not self.rawScaling:
-                    drawimg = pygame.transform.scale(drawimg, (camera.gridSize*self.rect[2], int((float(newrect[3])/newrect[2])*self.rect[3]*camera.gridSize)))
-
-                newrect = curImg.get_rect()
-                if not self.rawScaling:
+                    size = (camera.tileSize*self.rect[2], int((float(newrect[3])/newrect[2])*self.rect[3]*camera.tileSize))
                     newrect[0], newrect[1]= (self.rect[0], self.rect[1])
-                    newrect = camera.getRectForRect(newrect)
-                    newrect = (newrect[0] ,(newrect[1] - (drawimg.get_height() - (self.rect[3] * camera.gridSize))))
-                    #drawimg = pygame.transform.rotate(drawimg,self.rotation*90)
-                    #drawimg = pygame.transform.scale(drawimg,(drawimg.get_width()*self.rect[2],drawimg.get_height()*self.rect[3]))
-                    #newrect = (newrect[0] ,(newrect[1] - (self.rect[3]-1) * camera.gridSize))
+                    newrect = camera.gridRectToCameraRect(newrect)
+                    newrect = (newrect[0] ,(newrect[1] - ( size[1] - (self.rect[3] * camera.tileSize))))
 
                 else:
                     newrect[0], newrect[1]= (self.rect[0], self.rect[1])
-                    newrect = camera.getRectForRect(newrect)
-                    offset = camera.getRectForRect(self.rect)
+                    newrect = camera.gridRectToCameraRect(newrect)
+                    offset = camera.gridRectToCameraRect(self.rect)
                     newrect=(offset[0],offset[1],offset[2],offset[3])
-                    drawimg = pygame.transform.rotate(drawimg,self.rotation*90)
-                    drawimg=pygame.transform.scale(drawimg,(offset[2],offset[3]))
+                    size=(offset[2],offset[3])
+                    rotation = self.rotation*90
 
-                screen.blit(drawimg, (newrect[0]+self.wiggleLeft*1,newrect[1]))
+                drawimg = cached.getImg(self.imgName, size, idx = img_idx, flipped = not self.facingRight, rotation = rotation )
+
+                screen.blit(drawimg, (newrect[0]+self.wiggleLeft, newrect[1]))
             else:
                 if not portrait:  # something monsterous, draw generic bones
-                    deadImg = pygame.transform.scale(cached.getImgs('coreImgs/bones.png')[0],
-                                                     (self.rect[2] * camera.gridSize,
-                                                      self.rect[3] * camera.gridSize))
+                    deadImg = cached.getImg('coreImgs/bones.png', idx = 0, size=(self.rect[2] * camera.tileSize, self.rect[3] * camera.tileSize))
                     newrect = deadImg.get_rect()
                     newrect = newrect.move(self.rect[0], self.rect[1])
-                    screen.blit(deadImg, camera.getRectForRect(newrect))
+                    screen.blit(deadImg, camera.gridRectToCameraRect(newrect))
                 else:  # a main humanoid player
-                    deadImg = pygame.transform.rotate(imgs[0], -90)
+                    deadImg = cached.getImg(self.imgName, idx = 0, flipped = not self.facingRight, rotation =  -90.0, size = (camera.tileSize, int((float(self.rect[3])/self.rect[2])*camera.tileSize)))
                     newrect = deadImg.get_rect()
-                    newImg = pygame.transform.scale(deadImg, (camera.gridSize, int((float(newrect[3])/newrect[2])*camera.gridSize)))
-                    newrect = newImg.get_rect()
                     newrect = newrect.move(self.rect[0], self.rect[1])
-                    screen.blit(newImg, camera.getRectForRect(newrect))
-        self.drawHP(screen, camera)
+                    screen.blit(deadImg, camera.gridRectToCameraRect(newrect))
+            self.drawHP(screen, camera)
 
+    #def forcedraw(self, screen, camera,cached,model):
+    
+    def in_click(self, x, y, camera):
+        return camera.inBounds((self.rect[0], self.rect[1],self.rect[2], self.rect[3]), x, y)
+        
     def click(self, x, y, clicktype, camera):
         if self.targetable:
-            if camera.inBounds((self.rect[0], self.rect[1],self.rect[2], self.rect[3]), x, y):
+            if self.in_click(x,y,camera):
                 self.onClick(x, y, clicktype, camera)
                 return self
     def onDeletePress(self,camera,cached,model):

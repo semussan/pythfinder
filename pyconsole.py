@@ -241,8 +241,7 @@ class Console:
 		   text -- Text to be displayed
 		'''
 		if not str(text):
-			return;
-		
+			return		
 		try:
 			self.changed = True
 			if not isinstance(text,str):
@@ -283,7 +282,7 @@ class Console:
 		Draw the console to the parent screen
 		'''
 		if not self.active:
-			return;
+			return
 		
 		if self.changed:
 			self.changed = False
@@ -376,18 +375,23 @@ class Console:
 		globals().update(glob)
 		if not text:	# Output a blank row if nothing is entered
 			self.output("")
-			return;
+			return
 		
 		self.add_to_history(text)
 		
 		#Determine if the statement is an assignment
 		try:
-                        with stdoutIO() as s:
-                            exec text
-                        self.output(s.getvalue())
-                except Exception, e:
-                        self.output(e)
-                
+			ret = None
+			with stdoutIO() as s:
+				ret = eval(text)
+			if ret:
+				self.output(ret)
+			out = s.getvalue()
+			if out:
+				self.output(out)
+		except Exception, e:
+				self.output(e)
+			
 		#assign = re_is_assign.match(text)
 		#try:
 	#		#If it is tokenize only the "value" part of $name = value
@@ -397,7 +401,7 @@ class Console:
 	#			tokens = self.tokenize(text)
 		#except ParseError, e:
 	#		self.output(r'At Token: "%s"' % e.at_token())
-	#		return;
+	#		return
 	#	
 		#if tokens == None:
 	####		return
@@ -502,7 +506,7 @@ class Console:
 		Loop through pygame events and evaluate them
 		'''
 		if not self.active:
-			return;
+			return
 		
 		if self.preserve_events:
 			eventlist = pygame.event.get(KEYDOWN)

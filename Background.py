@@ -15,45 +15,15 @@ class Background(Editable):
         self.timer = 0
         self.switchTime = 50
 
-    def drawGridlines(self, camera,cached):
-        # gridlines
-        if camera.drawGrid:
-            if not cached.vert:
-                rawImg = pygame.image.load('coreImgs/vert.png')
-                cached.vert = pygame.transform.scale(rawImg, (3, self.rect[3] * camera.gridSize))
-            newrect = cached.vert.get_rect()
-
-            xs, ys, ws, hs = camera.getRectForRect(self.rect)
-            newrect = newrect.move(0, ys)
-            oldpos = 0
-            for x in range(xs, xs + ws, camera.gridSize):
-                newrect = newrect.move(x - oldpos, 0)
-                cached.screen(camera).blit(cached.vert, newrect)
-                oldpos = x
-
-            if not cached.horz:
-                rawImg = pygame.image.load('coreImgs/horz.png')
-                cached.horz = pygame.transform.scale(rawImg, (self.rect[2] * camera.gridSize, 3))
-            newrect = cached.horz.get_rect()
-            newrect = newrect.move(xs, 0)
-            oldpos = 0
-            for y in range(ys, ys + hs, camera.gridSize):
-                newrect = newrect.move(0, y - oldpos)
-                cached.screen(camera).blit(cached.horz, newrect)
-                oldpos = y
-
     def draw(self, screen, camera,cached ,model):
         self.switchTime = 10
-        imgs = cached.getImgs(self.imgName)
-        curImg = imgs[(self.timer / self.switchTime) % len(imgs)]
-        picture = pygame.transform.rotate(curImg, self.rotation*90)
-        picture = pygame.transform.scale(picture, (self.rect[2] * camera.gridSize,
-                                                   self.rect[3] * camera.gridSize))
+        num_imgs = cached.getNumImgs(self.imgName)
+        img_idx = (self.timer / self.switchTime) % num_imgs
+        size = (self.rect[2] * camera.tileSize, self.rect[3] * camera.tileSize)
+        picture = cached.getImg(self.imgName, idx = img_idx, rotation = self.rotation*90, size=size)
         newrect = picture.get_rect()
         newrect = newrect.move(self.rect[0], self.rect[1])
-        screen.blit(picture, camera.getRectForRect(newrect))
-
-        self.drawGridlines(camera,cached)
+        screen.blit(picture, camera.gridRectToCameraRect(newrect))
 
     def drawFoW(self, screen, camera,cached):
         if self.FoW and camera.drawShadows:

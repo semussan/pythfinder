@@ -28,13 +28,13 @@ class Bgtrack(Editable):
         img=None
         if self.isLocalized:
             if not cached._lSoundImg:
-                cached._lSoundImg = pygame.image.load('coreImgs/localSound.png')
+                cached._lSoundImg = pygame.image.load('coreImgs/localSound.png').convert_alpha()
             img = cached._lSoundImg
         else:
             if not cached._gSoundImg:
-                cached._gSoundImg = pygame.image.load('coreImgs/globalSound.png')
+                cached._gSoundImg = pygame.image.load('coreImgs/globalSound.png').convert_alpha()
             img = cached._gSoundImg
-        newrect = camera.getRectForRect((x,y,1,1))
+        newrect = camera.gridRectToCameraRect((x,y,1,1))
         cached.screen(camera).blit(img, newrect)
 
     def isNonlocalizedClicked(self, x, y,camera):

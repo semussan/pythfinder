@@ -92,10 +92,8 @@ class World():
                 playerName = self.joystickBindings[oldJoystick].imgName
                 self.joystickBindings[oldJoystick] = [x for x in players if x.imgName == playerName][-1]
 
-    def draw(self, screen, camera,cached,model):
+    def draw_world(self, screen, camera,cached,model):
         self.currentArea.draw(screen, camera,cached,model)
-        for player in self.players:
-            player.draw(screen, camera,cached,model)
 
     def update(self,camera,cached,model):
         self.players = [x for x in self.players if not x.markedForDeletion]
@@ -137,7 +135,7 @@ class World():
                     else:
                         portrait=cached.portrait(sprite.imgName)
                         if not portrait:
-                            portrait=cached.getImgs(player.imgName)[0]
+                            portrait=cached.getImg(player.imgName, idx = 0)
                         camera.show(sprite)
                         camera.addDialog(player, 'left')
                     return

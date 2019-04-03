@@ -43,10 +43,26 @@ def handle_user_input(model, camera, cached, console):
             running = False  # Be interpreter friendly
             pygame.quit()
             sys.exit()
+            
+        if event.type == pygame.VIDEORESIZE:
+            # There's some code to add back window content here.
+            camera.set_size(event.w, event.h)
         # record key status
         if hasattr(event, 'key'):
             down = event.type == KEYDOWN
             keyStatus[event.key] = down
+            
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 4:   #scrolling zoom
+                  camera.tileSize -= 2
+                  if camera.tileSize <=0:
+                      camera.tileSize = 1
+                  camera.calc_derivs()
+                  cached.calc_derivs(camera)
+            if event.button == 5:   #scrolling zoom
+                  camera.tileSize += 2
+                  camera.calc_derivs()
+                  cached.calc_derivs(camera)
 
         # record mouse input
         if event.type is pygame.MOUSEBUTTONUP or event.type is pygame.MOUSEBUTTONDOWN:
@@ -56,6 +72,12 @@ def handle_user_input(model, camera, cached, console):
     # Handle player controller input
     if newKeyPress(K_PAUSE):
         camera.pausingPlayers=not camera.pausingPlayers
+
+    if newKeyPress(K_PAUSE):
+        camera.pausingPlayers=not camera.pausingPlayers
+
+    if newKeyPress(K_m):
+        camera.horzTilesPerScreen-=1
 
     if camera.lookingForJoystickTarget:
         joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
@@ -74,7 +96,7 @@ def handle_user_input(model, camera, cached, console):
                 camera.lookingForJoystickTarget= None
 
 
-    ## Handle Inputs
+    ## Handle Player Controler Inputs
     pos = pygame.mouse.get_pos()
     gridCoords = camera.xyToModel(mousex, mousey)
 
@@ -165,17 +187,14 @@ def handle_user_input(model, camera, cached, console):
         model.world.reconnectJoysticks()
 
     if newKeyPress(K_PAGEUP):
-        camera.drawGrid = False
-    if newKeyPress(K_PAGEDOWN):
-        camera.drawGrid = True
+        camera.drawGrid = not camera.drawGrid
 
     if newKeyPress(K_HOME):
-        camera.drawShadows = False
-    if newKeyPress(K_END):
-        camera.drawShadows = True
+        camera.drawShadows = not camera.drawShadows
 
     if newKeyPress(K_BACKQUOTE):
         console.active = True
+
     if newKeyPress(K_KP_PLUS):
         camera.cameraChase = not camera.cameraChase
 
@@ -234,8 +253,8 @@ def handle_user_input(model, camera, cached, console):
     if newMouseRelease(1):
         target = model.world.click(gridCoords[0], gridCoords[1], 1 , camera,True,keyStatus[K_LCTRL],keyStatus[K_LSHIFT])
         camera.target = target
-    elif mouseStatus[1] or mouseStatus[2]:
-        model.world.click(gridCoords[0], gridCoords[1], 1 if mouseStatus[1] else 2, camera,False,keyStatus[K_LCTRL],keyStatus[K_LSHIFT])
+    #elif mouseStatus[1] or mouseStatus[2]:
+    #    model.world.click(gridCoords[0], gridCoords[1], 1 if mouseStatus[1] else 2, camera,False,keyStatus[K_LCTRL],keyStatus[K_LSHIFT])
 
     ########Battle buttons##############
     if newKeyPress(K_LALT):

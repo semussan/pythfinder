@@ -24,12 +24,12 @@ def writeState(filename, model,camera,cached):
 
 def loadState(filename=None):
     if not filename:
-        filename=getLatestSaveFile()
+        filename = getLatestSaveFile()
     #global transferModel, transferCamera, camera
     #model.world.currentArea.soundManager.clearRunningAndStored(cached)
     #screensave = camera.screen
     modelIn = None
-    cameraIn= None
+    cameraIn = None
     with open(filename, 'rb') as saveFile:
         modelIn, cameraIn = dill.load(saveFile)
 #    modelIn.world.currentArea.soundManager.spinUpAgain(cached)

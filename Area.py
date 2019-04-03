@@ -29,7 +29,7 @@ class Area():
 
 
     def drawHighlight(self, screen, camera, rect):
-        rect = camera.getRectForRect(rect)
+        rect = camera.gridRectToCameraRect(rect)
         trans = pygame.Surface((rect[2], rect[3],))
         trans.set_alpha(128)
         trans.fill((10, 10, 100))
@@ -38,19 +38,15 @@ class Area():
     def draw(self, screen, camera,cached,model):
         for background in self.backgrounds:
             background.update()
-            background.draw(screen, camera,cached,model)
+            background.draw(screen, camera, cached, model)
         for bloodDrop in self.blood:
-            self.drawBlood(bloodDrop, screen, camera,cached)
+            self.drawBlood(bloodDrop, screen, camera, cached)
         if camera.battleManager and camera.battleManager.started and camera.battleManager.getCurPlayer():
             camera.drawHighlight(camera.battleManager.getCurPlayer().rect, (100, 10, 10), 128, cached)
         for sprite in self.entities:
             sprite.draw(screen, camera,cached,model)
 
-    def forceDrawSprites(self, screen, camera,cached,model):
-        for sprite in self.entities:
-            sprite.forcedraw(screen, camera,cached,model)
-
-    def drawAfter(self, screen, camera,cached):
+    def drawFogOfWar(self, screen, camera,cached):
         for background in self.backgrounds:
             background.drawFoW(screen, camera,cached)
 
@@ -60,7 +56,7 @@ class Area():
 
 
     def drawBlood(self, bloodDrop, screen, camera,cached):
-        screen.blit(cached.bloodImgs()[bloodDrop[2]], camera.getRectForRect((bloodDrop[0], bloodDrop[1], 1, 1)))
+        screen.blit(cached.bloodImgs()[bloodDrop[2]], camera.gridRectToCameraRect((bloodDrop[0], bloodDrop[1], 1, 1)))
 
     def addBlood(self, x, y,cached):
         self.blood.append((x, y, random.randint(0, len(cached.bloodImgs()) - 1)))
@@ -70,16 +66,22 @@ class Area():
             #    if camera.inBounds(background.getBounds(), x, y):
             background.reveal(x - background.rect[0], y - background.rect[1], camera,cached,self)
 
+    click_count = 0
     def click(self, x, y, clicktype, camera, newClick,targetBackground,targetShadow):
+        Area.click_count+=1
         if newClick:
-            for sprite in self.entities[::-1]:
-                ret = sprite.click(x , y , clicktype, camera)
-                if ret:
-                    return ret
-            for blockline in self.blocklines[::-1]:
+            targeted = [entity for entity in self.entities if entity.in_click(x,y,camera)]
+            if targeted: #TODO have these and similiar functions return a list of targeted things, implementing clickable, and isClicked and click seperately 
+                click_mod = Area.click_count % len(targeted)
+                target = targeted[click_mod]
+                target.click(x , y , clicktype, camera)
+                return target
+
+            for blockline in self.blocklines:
                 ret = blockline.isClicked (x , y ,  camera)
                 if ret: return ret
-        for background in self.backgrounds[::-1]:
+
+        for background in self.backgrounds:
             ret = self.soundManager.click( x, y, clicktype, camera, newClick,targetBackground)
             if ret: return ret
             if camera.inBounds(background.getBounds(), x, y):
@@ -87,14 +89,14 @@ class Area():
                 if ret and targetBackground: return ret
 
     def getTarget(self,x, y, camera,targetBackground):
-        for sprite in self.entities[::-1]:
+        for sprite in self.entities:
             ret = sprite.isClicked(x, y, camera)
             if ret:
                 return ret
         if targetBackground:
             ret = self.soundManager.click( x, y, clicktype, camera, newClick,targetBackground)
             if ret: return ret
-            for background in self.backgrounds[::-1]:
+            for background in self.backgrounds:
                 if camera.inBounds(background.getBounds(), x, y):
                     return background
         ret = self.soundManager.getTarget( x, y,camera,targetBackground)
@@ -111,7 +113,7 @@ class Area():
         backgroundFound=False
         for background in self.backgrounds:
             if camera.inBounds(background.getBounds(), globx, globy):
-                img = cached.getImgs(background.imgName)[0]
+                img = cached.getImg(background.imgName, idx = 0)
                 xpixel = img.get_width() * (float(globx - background.rect[0] + .5) / background.rect[2])
                 ypixel = img.get_height() * (float(globy - background.rect[1] + .5) / background.rect[3])
                 pix = img.get_at((int(xpixel), int(ypixel)))
@@ -125,7 +127,7 @@ class Area():
                 if camera.inBounds(background.rect, rect[0], rect[1]):
                     for sx in range(rect[0],rect[0]+rect[2]):
                         for sy in range(rect[1],rect[1]+rect[3]):
-                            try:
+                            try: #TODO make this error reproducable and fix
                                 if  background.FoW.foglevels[sx-background.rect[0]][sy-background.rect[1]] is 0:
                                     return False
                             except:

@@ -7,7 +7,7 @@ class BlockLine(Editable):
         self.rect=rect;
 
     def draw(self, screen, camera,cached ,model):
-        newrect = camera.getRectForRect(self.rect)
+        newrect = camera.gridRectToCameraRect(self.rect)
         if self.isVert:
             pygame.draw.line(screen, (180,0,0), (newrect[0],newrect[1]), (newrect[0],newrect[1]+newrect[3]),2)
         else:

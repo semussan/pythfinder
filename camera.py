@@ -9,6 +9,8 @@ root = Tkinter.Tk()
 root.withdraw()
 import math
 
+pygame.font.init()
+
 
 def isInt(s):
     try:
@@ -18,33 +20,40 @@ def isInt(s):
         return False
 
 
-class camera():
-    currentDescriptionTarget = None
-    target = None
-    battleManager = None
-    defSubx = 908
-    defSuby = 140
+class Camera():
+    def_x = 982
+    def_y = 982
+    FPS_FONT = pygame.font.Font(None, 18)
 
-    defPadding = 50
-    x = -10
-    y = -10
-    horzTilesPerScreen = 27
-    subx, suby = (defPadding, defPadding)
-    subwid = 882
-    subhig = 670
-    vertTilesPerScreen =  int(math.ceil((horzTilesPerScreen*(float(subhig))/float(subwid))))
-    dialogTime = 30  # 6sec * 24    fps
-    isFull = False
-    drawGrid = True
-    drawShadows = True
-    resx, resy = (defPadding * 2 + subwid, defPadding * 2 + subhig)
-    dialogs = {}
-    doStreaming=True
-    copyTarget=False
-    gridSize=subwid / horzTilesPerScreen
-    pausingPlayers=False
-    lookingForJoystickTarget = None
-    cameraChase = False
+    def __init__(self):
+        self.currentDescriptionTarget = None
+        self.target = None
+        self.battleManager = None
+        self.x = -10
+        self.y = -10
+        self.tileSize = 32
+        self.dialogTime = 30  # 6sec * 24    fps
+        self.isFull = False
+        self.drawGrid = True
+        self.drawShadows = True
+        self.dialogs = {}
+        self.doStreaming=True
+        self.copyTarget=False
+        self.pausingPlayers=False
+        self.lookingForJoystickTarget = None
+        self.cameraChase = False
+        self.set_size(Camera.def_x , Camera.def_y)
+        self.recenter(0, 0)
+
+    def set_size(self, w, h):
+        pygame.display.set_mode((w, h), pygame.RESIZABLE)
+        (self.resx, self.resy) = (w, h)
+        #self.tileSize = self.resx / horzTilesPerScreen
+        self.calc_derivs()
+
+    def calc_derivs(self):
+        self.vertTilesPerScreen =  int(math.ceil(float(self.resy) / self.tileSize))
+        self.horzTilesPerScreen =  int(math.ceil(float(self.resx) / self.tileSize))
 
     def show(self,target):
         self.addDialog(target, 'right')
@@ -53,47 +62,43 @@ class camera():
         return x >= rect[0] and x < rect[0] + rect[2] and y >= rect[1] and y < rect[1] + rect[3]
 
     def recenter(self, x, y):
-        self.x = x - self.horzTilesPerScreen / 2
-        self.y = y - (self.subhig / 2) / self.gridSize
+        self.x = x - (self.resx / 2) / self.tileSize
+        self.y = y - (self.resy / 2) / self.tileSize
 
-    def __init__(self):
-        self.recenter(0, 0)
 
     def toggleFull(self):
         if self.isFull:
-            self.subx, self.suby = (self.defPadding, self.defPadding)
-            self.resx, self.resy = (self.defPadding * 2 + self.subwid, self.defPadding * 2 + self.subhig)
-            pygame.display.set_mode((self.resx, self.resy))
+            self.resx, self.resy = (Camera.def_x, Camera.def_y)
+            pygame.display.set_mode((self.resx, self.resy), RESIZABLE)
             self.isFull = False
         else:
             self.resx, self.resy = (1920, 1080)
-            self.subx, self.suby = (self.defSubx, self.defSuby)
             pygame.display.set_mode((self.resx, self.resy), FULLSCREEN)
             self.isFull = True
 
     def getCameraCenter(self):
-        return (self.x + (self.subx + (self.subwid / 2)) / self.gridSize,
-                self.y + (self.suby + (self.subhig / 2)) / self.gridSize)
+        return (self.x + (self.resx / 2) / self.tileSize,
+                self.y + (self.resy / 2) / self.tileSize)
 
     def xyToModel(self, x, y):
-        return ((x - self.subx) / self.gridSize + self.x,
-                (y - self.suby) / self.gridSize + self.y,)
+        return (x / self.tileSize + self.x,
+                y / self.tileSize + self.y,)
 
     def getXYForXY(self, x, y):
-        return (self.subx + (x - self.x) * self.gridSize,
-                self.suby + (y - self.y) * self.gridSize,)
+        return ( (x - self.x) * self.tileSize,
+                 (y - self.y) * self.tileSize,)
 
     def getRectForXY(self, x, y):
-        return (self.subx + (x - self.x) * self.gridSize,
-                self.suby + (y - self.y) * self.gridSize,
-                self.gridSize,
-                self.gridSize)
+        return ((x - self.x) * self.tileSize,
+                (y - self.y) * self.tileSize,
+                self.tileSize,
+                self.tileSize)
 
-    def getRectForRect(self, rect):
-        return (self.subx + (rect[0] - self.x) * self.gridSize,
-                self.suby + (rect[1] - self.y) * self.gridSize,
-                rect[2] * self.gridSize,
-                rect[3] * self.gridSize)
+    def gridRectToCameraRect(self, rect):
+        return ((rect[0] - self.x) * self.tileSize,
+                (rect[1] - self.y) * self.tileSize,
+                rect[2] * self.tileSize,
+                rect[3] * self.tileSize)
 
     def quickFile(self):
         return tkFileDialog.askopenfilename()
@@ -112,7 +117,7 @@ class camera():
         return int(str)
 
     def drawHighlight(self, rect, color, alpha,cached):
-        rect = self.getRectForRect(rect)
+        rect = self.gridRectToCameraRect(rect)
         trans = pygame.Surface((rect[2], rect[3],))
         trans.set_alpha(alpha)
         trans.fill(color)
@@ -120,6 +125,7 @@ class camera():
 
     def clippedXRange(self,reqStart,reqFin,reoff):
         return range(max(self.x, reqStart)-reoff, min(self.x + self.horzTilesPerScreen,reqFin)-reoff)
+        
     def clippedYRange(self,reqStart,reqFin,reoff):
         return range(max(self.y, reqStart)-reoff, min(self.y + self.vertTilesPerScreen,reqFin)-reoff)
 
@@ -127,29 +133,7 @@ class camera():
         if time:
             self.dialogTime = time
         self.dialogs[player] = {'timeRemaining': self.dialogTime, 'Side': side}
-
-    ##        def drawGridlines(self):
-    ##            #gridlines
-    ##            if self.drawGrid:
-    ##                    if (self.resx,self.resy) not in self.vert:
-    ##                            self.vert[(self.resx,self.resy)]=pygame.image.load('coreImgs/vert.png')
-    ##                    picture = pygame.transform.scale(self.vert[(self.resx,self.resy)], (3, self.resy))
-    ##                    newrect = picture.get_rect()
-    ##                    oldpos=0
-    ##                    for x in range(0 + (self.subx%self.gridSize), self.resx, self.gridSize):
-    ##                            newrect = newrect.move(x-oldpos,0)
-    ##                    cached.screen(self).blit(picture, newrect)
-    ##                            oldpos=x
-    ##
-    ##                    if (self.resx,self.resy) not in self.horz:
-    ##                            self.horz[(self.resx,self.resy)]=pygame.image.load('coreImgs/horz.png')
-    ##                    picture = pygame.transform.scale(self.horz[(self.resx,self.resy)], (self.resx, 3))
-    ##                    newrect = picture.get_rect()
-    ##                    oldpos=0
-    ##                    for y in range(0 + (self.suby%self.gridSize), self.resy, self.gridSize):
-    ##                            newrect = newrect.move(0,y-oldpos)
-    ##                            cached.screen(self).blit(picture, newrect)
-    ##                            oldpos=y
+        
     def update(self,model):
         if self.cameraChase:
             x = sum([i.rect[0] for i in model.world.players])/len(model.world.players)
@@ -159,24 +143,19 @@ class camera():
             self.dialogs[player]['timeRemaining'] -= 1
         self.dialogs = {key: value for key, value in self.dialogs.iteritems() if value['timeRemaining'] >= 0}
 
+
+    def drawGridlines(self, cached):
+        if self.drawGrid:
+            color = (0,0,0)
+            width = 1
+            for x in range (0, self.resx, self.tileSize):
+                pygame.draw.line(cached.screen(self), color, (x,0), (x, self.resy), width)
+            for y in range (0, self.resy, self.tileSize):
+                pygame.draw.line(cached.screen(self), color, (0,y), (self.resx, y), width)
+
     def drawWorld(self, model, console,cached):
-        gridSize = self.gridSize
-        cached.screen(self).fill((0, 0, 0))
-        pygame.draw.rect(cached.screen(self), (10, 10, 10), (self.subx, self.suby, self.subwid, self.subhig),
-                         0)  # projector sub-screen outline
-        # for x, y, image in model.world.tiles:
-        #        screen.blit(image, (self.x+x*gridSize +self.subx,self.y+y*gridSize+self.suby))
-
-        # for x, y, wid, hig, image in model.world._imgs:
-        #        picture = pygame.transform.scale(image, (wid*gridSize, hig*gridSize))
-        #        rect = picture.get_rect()
-        #        rect = rect.move((self.x+x*gridSize +self.subx ,self.y+y*gridSize +self.suby))
-        #        screen.blit(picture, rect)
-        model.world.draw(cached.screen(self), self,cached,model)
-
-
-
-        # black-out borders
+        tileSize = self.tileSize
+        
         if self.battleManager:
             color = (60, 0, 0)
         elif self.doStreaming:
@@ -184,19 +163,13 @@ class camera():
         else:
             color = (0, 0, 0)
 
-        pygame.draw.rect(cached.screen(self), color, (0, 0, self.resx, self.suby), 0)
-        pygame.draw.rect(cached.screen(self), color, (self.subx + self.subwid, 0, self.resx, self.resy), 0)
-        pygame.draw.rect(cached.screen(self), color, (0, self.suby + self.subhig, self.resx, self.resy), 0)
-        pygame.draw.rect(cached.screen(self), color, (0, 0, self.subx, self.resy), 0)
-        if console.active:
-            console.draw()
-
-        model.world.currentArea.drawAfter(cached.screen(self),self,cached)
+        cached.screen(self).fill(color)
+        model.world.draw_world(cached.screen(self), self,cached,model)
+        self.drawGridlines(cached)
+        model.world.currentArea.drawFogOfWar(cached.screen(self),self,cached)
+        self.drawSprites(cached.screen(self),self,cached, model, dm_view = False)
+        
         screenshot=None
-        if self.doStreaming:
-            rect = pygame.Rect(int(self.subx), int(self.suby), int(self.subwid), int(self.subhig))
-            screenshot = pygame.Surface((int(self.subwid), int(self.subhig)))
-            screenshot.blit(cached.screen(self), rect, area=rect)
 
         # Organize Dialogs
         leftDialogs = []
@@ -208,6 +181,9 @@ class camera():
                 rightDialogs.append(player)
         leftDialogs = sorted(leftDialogs, key=lambda x: -self.dialogs[x]['timeRemaining'])
         rightDialogs = sorted(rightDialogs, key=lambda x: -self.dialogs[x]['timeRemaining'])
+
+        
+
         # Draw dialogs
         space = 10
         runningOffset = 0
@@ -215,16 +191,16 @@ class camera():
         for player in leftDialogs:
             portrait=cached.portrait(player.imgName)
             if not portrait:
-                portrait=cached.getImgs(player.imgName)[0]
+                portrait = cached.getImg(player.imgName, idx=0)
             if portrait:
                 newRect = portrait.get_rect()
-                newimg= pygame.transform.scale(portrait,(camera.gridSize*8, int((float(newRect[3])/newRect[2])*camera.gridSize*8)))
+                newimg = pygame.transform.scale(portrait,(Camera.tileSize*8, int((float(newRect[3])/newRect[2])*Camera.tileSize*8)))
                 newRect = newimg.get_rect()
-                newRect = newRect.move(self.subx + runningOffset + borderOffsets[0],
-                                       self.suby + self.subhig - newRect[3] - borderOffsets[1])
+                newRect = newRect.move(runningOffset + borderOffsets[0],
+                                       self.resy - newRect[3] - borderOffsets[1])
                 cached.screen(self).blit(newimg, newRect)
-                if self.doStreaming:
-                    screenshot.blit(newimg, newRect)
+                #if self.doStreaming:
+                #    screenshot.blit(newimg, newRect)
                 runningOffset += space + newRect[2]
 
         space = 10
@@ -232,26 +208,32 @@ class camera():
         for player in rightDialogs:
             portrait=cached.portrait(player.imgName)
             if not portrait:
-                portrait=cached.getImgs(player.imgName)[0]
+                portrait=cached.getImg(player.imgName, idx=0)
             if portrait:
                 newRect = portrait.get_rect()
-                newimg= pygame.transform.scale(portrait,(camera.gridSize*8, int((float(newRect[3])/newRect[2])*camera.gridSize*8)))
+                newimg= pygame.transform.scale(portrait,(self.tileSize*8, int((float(newRect[3])/newRect[2])*self.tileSize*8)))
                 newRect = newimg.get_rect()
-                newRect = newRect.move(self.subx + self.subwid - runningOffset - borderOffsets[0] - newRect[2],
-                                       self.suby + self.subhig - newRect[3] - borderOffsets[1])
+                newRect = newRect.move(self.resx - runningOffset - borderOffsets[0] - newRect[2],
+                                       self.resy - newRect[3] - borderOffsets[1])
                 cached.screen(self).blit(newimg, newRect)
-                if self.doStreaming:
-                    screenshot.blit(newimg, newRect)
+                #if self.doStreaming:
+                #    screenshot.blit(newimg, newRect)
                 runningOffset += space + newRect[2]
 
+
+        #Things after here are not seen by the remote users
         if self.doStreaming:
+            #rect = pygame.Rect(int(0), int(0), int(self.resx), int(self.resy))
+            #screenshot = pygame.Surface((int(self.resx), int(self.resy)))
+            #screenshot.blit(cached.screen(self), rect, area=rect)
             outFileName=r"screenshots/" + str(datetime.datetime.now().microsecond/10000)
             try:
-                pygame.image.save(screenshot, outFileName+'.jpg')
+                pygame.image.save(cached.screen(self), outFileName+'.BMP')
             except:
                 pass
 
-        #Things after here are not seen by the remote users
+        self.drawSprites(cached.screen(self),self,cached, model, dm_view = True)
+
 
 
         if self.currentDescriptionTarget and self.currentDescriptionTarget.description:
@@ -268,12 +250,33 @@ class camera():
                 text = font.render(descChunk , 1, (200, 200, 200))
                 cached.screen(self).blit(text, (10, i*spacing + topOfText))
 
-        model.world.currentArea.soundManager.draw(cached.screen(camera), self, cached ,model)
-        model.world.currentArea.drawLines(cached.screen(camera), self, cached ,model)
+        model.world.currentArea.soundManager.draw(cached.screen(Camera), self, cached ,model)
+        model.world.currentArea.drawLines(cached.screen(Camera), self, cached ,model)
 
         if self.target:
             self.drawHighlight(self.target.rect, (10, 10, 100), 128,cached)
 
 
-        model.world.currentArea.forceDrawSprites(cached.screen(self),self,cached, model)
+
+        if console.active:
+            console.draw()
+            
+        #self.showFPS(FPS, cached)
+
+    def drawSprites(self, screen, camera,cached,model, dm_view = False):
+        #painters alg
+        all_sprites = model.world.currentArea.entities + model.world.players
+        all_sprites.sort(key = lambda x : x.rect[3]) #by height
+        all_sprites.sort(key = lambda x : x.rect[1]+x.rect[3]) #then by y pos
+        for sprite in all_sprites:
+            sprite.draw(screen, camera,cached,model, dm_view=dm_view)
+
+    def showFPS(self, fps, model_time, view_time, controler_time, cached):
+        start_pos = (5,5)
+        v_space = 20
+        sum_time = model_time + view_time+ controler_time
+        for count, i in enumerate([('FPS: ', fps), ('model_time ', model_time/sum_time) , ('view_time: ', view_time/sum_time) , ('controler_time: ', controler_time/sum_time)]):
+            text = Camera.FPS_FONT.render(i[0] + str(i[1]), 1, (220, 0, 0))
+            #center = camera.getXYForXY(self.rect[0] + self.rect[2] / 2.0, self.rect[1] + self.rect[3])
+            cached.screen(self).blit(text, (start_pos[0], start_pos[1] + count * v_space))
 

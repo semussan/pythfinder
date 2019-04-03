@@ -54,7 +54,7 @@ def scale_point(point, factor):
 
 
 def main():
-	G_Screen = pygame.display.set_mode((600,480))
+	G_Screen = pygame.display.set_mode((600,480), RESIZABLE)
 	cube_color = [0x0,0xFF,0x0]
 
 	console = pyconsole.Console(G_Screen, (0,0,600,240), vars={"color":cube_color}, functions={"set_rot":gen_rotations}, key_calls={'d':sys.exit})
